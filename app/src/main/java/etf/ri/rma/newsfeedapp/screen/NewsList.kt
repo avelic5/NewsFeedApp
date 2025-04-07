@@ -10,7 +10,7 @@ import etf.ri.rma.newsfeedapp.model.NewsItem
 @Composable
 fun NewsList(newsItems: List<NewsItem>, selectedCategory: String) {
     if (newsItems.isEmpty()) {
-        MessageCard("Nema pronađenih vijesti u kategoriji \"$selectedCategory\"")
+        MessageCard("Nema pronađenih vijesti u kategoriji \"$selectedCategory\"") //ovi sleshevi radi navodnika
     } else {
         LazyColumn(modifier = Modifier.fillMaxSize()) {
             items(newsItems) { newsItem ->

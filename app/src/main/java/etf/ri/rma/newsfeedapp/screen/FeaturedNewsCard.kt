@@ -15,35 +15,35 @@ import etf.ri.rma.newsfeedapp.R
 
 @Composable
 fun FeaturedNewsCard(newsItem: NewsItem) {
-    Card(modifier = Modifier.padding(8.dp)) {
-        Column(modifier = Modifier.padding(8.dp)) {
+    Card(modifier = Modifier.padding(10.dp)) {
+        Column(modifier = Modifier.padding(10.dp)) {
             // Banner slika
             Image(
-                painter = painterResource(id = R.drawable.vijesti), // Zamijenite sa stvarnim resursom
+                painter = painterResource(id = R.drawable.vijesti),
                 contentDescription = null,
-                modifier = Modifier.fillMaxWidth().height(180.dp),
+                modifier = Modifier.fillMaxWidth().height(170.dp),
                 contentScale = ContentScale.Crop
             )
 
-            Spacer(modifier = Modifier.height(8.dp))
+            Spacer(modifier = Modifier.height(10.dp))
 
             // Tekstualni sadržaj
             Column(modifier = Modifier.fillMaxWidth()) {
                 Text(
                     text = newsItem.title,
-                    fontSize = 20.sp,
+                    fontSize = 19.sp,
                     maxLines = 2 // Prikaz naslova u dva reda ako je naslov predug
                 )
                 Text(
                     text = newsItem.snippet,
-                    fontSize = 16.sp,
+                    fontSize = 15.sp,
                     maxLines = 2,
                     modifier = Modifier.padding(top = 4.dp)
                 )
-                Spacer(modifier = Modifier.height(8.dp))
+                Spacer(modifier = Modifier.height(10.dp))
                 Text(
                     text = "${newsItem.source} • ${newsItem.publishedDate}",
-                    fontSize = 14.sp,
+                    fontSize = 13.sp,
                     modifier = Modifier.padding(top = 4.dp)
                 )
             }

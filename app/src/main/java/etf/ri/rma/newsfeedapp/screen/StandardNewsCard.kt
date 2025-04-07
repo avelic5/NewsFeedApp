@@ -19,7 +19,7 @@ fun StandardNewsCard(newsItem: NewsItem) {
         Row(modifier = Modifier.padding(8.dp)) {
             // Slika
             Image(
-                painter = painterResource(id = R.drawable.vijesti), // Zamijenite sa stvarnim resursom
+                painter = painterResource(id = R.drawable.vijesti),
                 contentDescription = null,
                 modifier = Modifier.size(64.dp),
                 contentScale = ContentScale.Crop
