@@ -2,6 +2,8 @@ package etf.ri.rma.newsfeedapp.screen
 
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -14,7 +16,8 @@ import etf.ri.rma.newsfeedapp.model.NewsItem
 fun NewsFeedScreen(newsItems: List<NewsItem>) {
     var selectedCategory by remember { mutableStateOf("All") }//pocetno stanje
 
-    Column(modifier = Modifier.fillMaxSize()) {
+   Surface( modifier = Modifier.fillMaxSize(),
+       color = MaterialTheme.colorScheme.background)  { Column(modifier = Modifier.fillMaxSize()) {
         FilterChips( //moja funkcija
             selectedCategory = selectedCategory,//kategorija kao state
             onCategorySelected = { category -> selectedCategory = category }//------
@@ -26,5 +29,5 @@ fun NewsFeedScreen(newsItems: List<NewsItem>) {
             selectedCategory = selectedCategory
             //filter { ... } prolazi kroz sve elemente liste newsItems i zadržava samo one elemente za koje je uslov unutar {} true.
         )
-    }
+    }}
 }

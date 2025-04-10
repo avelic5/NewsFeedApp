@@ -5,12 +5,15 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import etf.ri.rma.newsfeedapp.data.NewsData
 import etf.ri.rma.newsfeedapp.screen.NewsFeedScreen
+import etf.ri.rma.newsfeedapp.ui.theme.NewsFeedAppTheme
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContent {
-            NewsFeedScreen(newsItems = NewsData.getAllNews())
+            NewsFeedAppTheme {
+                NewsFeedScreen(newsItems = NewsData.getAllNews())
+            }
         }
     }
 }
