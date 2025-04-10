@@ -11,6 +11,6 @@ import androidx.compose.ui.unit.sp
 @Composable
 fun MessageCard(message: String) {
     Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-        Text(text = message, fontSize = 16.sp)
+        Text(text = message, fontSize = 14.sp)
     }
 }
