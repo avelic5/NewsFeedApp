@@ -20,7 +20,7 @@ fun StandardNewsCard(newsItem: NewsItem) {
             // Slika
             Image(
                 painter = painterResource(id = R.drawable.vijesti),
-                contentDescription = null,
+                contentDescription = "image",
                 modifier = Modifier.size(64.dp),
                 contentScale = ContentScale.Crop
             )

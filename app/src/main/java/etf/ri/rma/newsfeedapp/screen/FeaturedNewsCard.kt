@@ -20,7 +20,7 @@ fun FeaturedNewsCard(newsItem: NewsItem) {
             // Banner slika
             Image(
                 painter = painterResource(id = R.drawable.vijesti),
-                contentDescription = null,
+                contentDescription = "image",
                 modifier = Modifier.fillMaxWidth().height(170.dp),
                 contentScale = ContentScale.Crop
             )

@@ -1,5 +1,4 @@
 package etf.ri.rma.newsfeedapp.screen
-
 import FilterChips
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
@@ -11,24 +10,33 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import etf.ri.rma.newsfeedapp.data.NewsData
 import etf.ri.rma.newsfeedapp.model.NewsItem
+import etf.ri.rma.newsfeedapp.screen.NewsList
 
 @Composable
-fun NewsFeedScreen(newsItems: List<NewsItem>) {
-    var selectedCategory by remember { mutableStateOf("All") }//pocetno stanje
+fun NewsFeedScreen() {
+    var selectedCategory by remember { mutableStateOf("All") }
 
-   Surface( modifier = Modifier.fillMaxSize(),
-       color = MaterialTheme.colorScheme.background)  { Column(modifier = Modifier.fillMaxSize()) {
-        FilterChips( //moja funkcija
-            selectedCategory = selectedCategory,//kategorija kao state
-            onCategorySelected = { category -> selectedCategory = category }//------
-        )
-        NewsList(//moja funkcija
-            newsItems = newsItems.filter {
-                it.category == selectedCategory || selectedCategory == "All"
-            },
-            selectedCategory = selectedCategory
-            //filter { ... } prolazi kroz sve elemente liste newsItems i zadržava samo one elemente za koje je uslov unutar {} true.
-        )
-    }}
+    val newsItems = NewsData.getAllNews()
+
+    Surface(
+        modifier = Modifier.fillMaxSize(),
+        color = MaterialTheme.colorScheme.background
+    ) {
+        Column(modifier = Modifier.fillMaxSize()) {
+            FilterChips(
+                selectedCategory = selectedCategory,
+                onCategorySelected = { category -> selectedCategory = category }
+            )
+            NewsList(
+                newsItems = newsItems.filter {
+                    it.category == selectedCategory || selectedCategory == "All"
+                },
+                selectedCategory = selectedCategory
+            )
+        }
+    }
 }
+
+
