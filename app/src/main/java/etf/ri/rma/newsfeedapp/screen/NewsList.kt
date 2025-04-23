@@ -9,16 +9,26 @@ import androidx.compose.ui.platform.testTag
 import etf.ri.rma.newsfeedapp.model.NewsItem
 
 @Composable
-fun NewsList(newsItems: List<NewsItem>, selectedCategory: String) {
+fun NewsList(
+    newsItems: List<NewsItem>,
+    selectedCategory: String,
+    onNewsClick: (String) -> Unit
+) {
     if (newsItems.isEmpty()) {
-        MessageCard("Nema pronađenih vijesti u kategoriji \"$selectedCategory\"") //ovi sleshevi radi navodnika
+        MessageCard("Nema pronađenih vijesti u kategoriji \"$selectedCategory\"")
     } else {
         LazyColumn(modifier = Modifier.fillMaxSize().testTag("news_list")) {
             items(newsItems) { newsItem ->
                 if (newsItem.isFeatured) {
-                    FeaturedNewsCard(newsItem)
+                    FeaturedNewsCard(
+                        newsItem = newsItem,
+                        onClick = { onNewsClick(newsItem.id) }
+                    )
                 } else {
-                    StandardNewsCard(newsItem)
+                    StandardNewsCard(
+                        newsItem = newsItem,
+                        onClick = { onNewsClick(newsItem.id) }
+                    )
                 }
             }
         }
