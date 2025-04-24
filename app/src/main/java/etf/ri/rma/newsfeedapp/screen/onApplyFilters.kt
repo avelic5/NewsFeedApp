@@ -1,6 +1,7 @@
 package etf.ri.rma.newsfeedapp.screen
-
 import etf.ri.rma.newsfeedapp.model.NewsItem
+import java.text.SimpleDateFormat
+import java.util.*
 
 fun onApplyFilters(
     category: String,
@@ -14,15 +15,21 @@ fun onApplyFilters(
         filteredList = filteredList.filter { it.category == category }
     }
 
-    if (dateRange.isNotEmpty()) {
-        val (startDateString, endDateString) = dateRange.split(";")
-        val formatter = java.text.SimpleDateFormat("dd-MM-yyyy", java.util.Locale.getDefault())
-        val startDate = formatter.parse(startDateString)
-        val endDate = formatter.parse(endDateString)
+    if (dateRange.isNotEmpty() && dateRange.contains(" - ")) {
+        try {
+            val (startDateString, endDateString) = dateRange.split(" - ")
+            val formatter = SimpleDateFormat("dd-MM-yyyy", Locale.getDefault())
+            formatter.isLenient = false
 
-        filteredList = filteredList.filter {
-            val itemDate = formatter.parse(it.publishedDate)
-            itemDate in startDate..endDate
+            val startDate = formatter.parse(startDateString)
+            val endDate = formatter.parse(endDateString)
+
+            filteredList = filteredList.filter {
+                val itemDate = formatter.parse(it.publishedDate)
+                itemDate != null && itemDate in startDate..endDate
+            }
+        } catch (e: Exception) {
+            println("Greška pri parsiranju datuma: ${e.message}")
         }
     }
 
@@ -30,7 +37,7 @@ fun onApplyFilters(
         filteredList = filteredList.filter { item ->
             unwantedWords.none { unwantedWord ->
                 item.title.contains(unwantedWord, ignoreCase = true) ||
-                        item.snippet.contains(unwantedWord, ignoreCase = true)
+                        (item.snippet?.contains(unwantedWord, ignoreCase = true) ?: false)
             }
         }
     }

@@ -1,30 +1,33 @@
 package etf.ri.rma.newsfeedapp.screen
+
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.testTag
-import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.window.Dialog
+import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
 import java.text.SimpleDateFormat
 import java.util.*
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun FilterScreen(navController: NavController, onApplyFilters: (String, String, List<String>) -> Unit) {
-    var selectedCategory by remember { mutableStateOf("All") }
-    val categories = listOf("Politika", "Sport", "Nauka/tehnologija", "All")
-    val categoryTags = listOf("filter_chip_pol", "filter_chip_spo", "filter_chip_sci", "filter_chip_all")
-
-    var dateRange by remember { mutableStateOf("Odaberite opseg datuma") }
-    var showDatePicker by remember { mutableStateOf(false) }
-
+fun FilterScreen(
+    navController: NavController,
+    selectedCategory: String,
+    dateRange: String,
+    unwantedWords: List<String>,
+    onApplyFilters: (String, String, List<String>) -> Unit
+) {
+    var currentCategory by remember { mutableStateOf(selectedCategory) }
+    var currentDateRange by remember { mutableStateOf(if (dateRange.isEmpty()) "Svi datumi" else dateRange) }
+    var currentUnwantedWords by remember { mutableStateOf(unwantedWords) }
     var unwantedWord by remember { mutableStateOf("") }
-    var unwantedWords by remember { mutableStateOf(listOf<String>()) }
+    var showDatePicker by remember { mutableStateOf(false) }
 
     Surface(
         modifier = Modifier.fillMaxSize(),
@@ -32,13 +35,20 @@ fun FilterScreen(navController: NavController, onApplyFilters: (String, String, 
     ) {
         Column(modifier = Modifier.padding(16.dp)) {
             // Category Chips
-            Text("Kategorije", style = MaterialTheme.typography.titleMedium)
+            Text(
+                "KATEGORIJE:",
+                style = MaterialTheme.typography.titleMedium,
+                modifier = Modifier.padding(bottom = 8.dp)
+            )
+            val categories = listOf("All", "Politika", "Sport", "Nauka/tehnologija")
             Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                categories.forEachIndexed { index, category ->
+                categories.forEach { category ->
                     AssistChip(
-                        onClick = { selectedCategory = category },
+                        onClick = { currentCategory = category },
                         label = { Text(category) },
-                        modifier = Modifier.testTag(categoryTags[index])
+                        colors = AssistChipDefaults.assistChipColors(
+                            containerColor = if (currentCategory == category) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.surface
+                        )
                     )
                 }
             }
@@ -46,65 +56,57 @@ fun FilterScreen(navController: NavController, onApplyFilters: (String, String, 
             Spacer(modifier = Modifier.height(16.dp))
 
             // Date Range Picker
-            Text("Opseg datuma", style = MaterialTheme.typography.titleMedium)
+            Text(
+                "Izaberite opseg datuma:",
+                style = MaterialTheme.typography.titleMedium,
+                modifier = Modifier.padding(bottom = 8.dp)
+            )
             Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(8.dp)
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 8.dp),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.SpaceBetween
             ) {
                 Text(
-                    text = dateRange,
-                    modifier = Modifier
-                        .weight(1f)
-                        .testTag("filter_daterange_display"),
-                    style = MaterialTheme.typography.bodySmall // Use a smaller typography style
+                    text = currentDateRange,
+                    style = MaterialTheme.typography.bodyMedium.copy(fontSize = 16.sp),
+                    textAlign = TextAlign.Start,
+                    modifier = Modifier.weight(1f)
                 )
                 Button(
                     onClick = { showDatePicker = true },
-                    modifier = Modifier.testTag("filter_daterange_button")
+                    modifier = Modifier
+                        .testTag("filter_daterange_button")
+                        .padding(start = 8.dp)
                 ) {
-                    Text("Odaberite")
+                    Text("Odaberite", fontSize = 14.sp)
                 }
             }
 
             if (showDatePicker) {
-                val datePickerState = rememberDateRangePickerState()
-
-                Dialog(onDismissRequest = { showDatePicker = false }) {
-                    Surface {
-                        DateRangePicker(
-                            state = datePickerState,
-                            modifier = Modifier.padding(16.dp)
-                        )
-                        Row(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(16.dp),
-                            horizontalArrangement = Arrangement.End
-                        ) {
-                            TextButton(onClick = { showDatePicker = false }) {
-                                Text("Cancel")
-                            }
-                            TextButton(onClick = {
-                                val formatter = SimpleDateFormat("dd-MM-yyyy", Locale.getDefault())
-                                val startDate = datePickerState.selectedStartDateMillis?.let { Date(it) }
-                                val endDate = datePickerState.selectedEndDateMillis?.let { Date(it) }
-
-                                if (startDate != null && endDate != null) {
-                                    dateRange = "${formatter.format(startDate)} - ${formatter.format(endDate)}"
-                                }
-                                showDatePicker = false
-                            }) {
-                                Text("OK")
-                            }
+                DateRangePickerModal(
+                    onDismiss = { showDatePicker = false },
+                    onDateRangeSelected = { startDate, endDate ->
+                        currentDateRange = if (startDate != null && endDate != null) {
+                            val formatter = SimpleDateFormat("d. MMM. yyyy", Locale.getDefault())
+                            "${formatter.format(Date(startDate))} - ${formatter.format(Date(endDate))}"
+                        } else {
+                            "Svi datumi" // Default vrednost
                         }
+                        showDatePicker = false
                     }
-                }
+                )
             }
 
             Spacer(modifier = Modifier.height(16.dp))
 
             // Unwanted Words Filter
-            Text("Nepoželjne riječi", style = MaterialTheme.typography.titleMedium)
+            Text(
+                "Nepoželjne riječi:",
+                style = MaterialTheme.typography.titleMedium,
+                modifier = Modifier.padding(bottom = 8.dp)
+            )
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.spacedBy(8.dp)
@@ -115,14 +117,13 @@ fun FilterScreen(navController: NavController, onApplyFilters: (String, String, 
                     placeholder = { Text("Unesite riječ") },
                     modifier = Modifier
                         .weight(1f)
-                        .testTag("filter_unwanted_input"),
-                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Text)
+                        .testTag("filter_unwanted_input")
                 )
                 Button(
                     onClick = {
                         val word = unwantedWord.trim()
-                        if (word.isNotEmpty() && unwantedWords.none { it.equals(word, ignoreCase = true) }) {
-                            unwantedWords = unwantedWords + word
+                        if (word.isNotEmpty() && currentUnwantedWords.none { it == word }) {
+                            currentUnwantedWords = currentUnwantedWords + word
                         }
                         unwantedWord = ""
                     },
@@ -135,8 +136,8 @@ fun FilterScreen(navController: NavController, onApplyFilters: (String, String, 
             Spacer(modifier = Modifier.height(8.dp))
 
             LazyColumn(modifier = Modifier.testTag("filter_unwanted_list")) {
-                items(unwantedWords.size) { index ->
-                    Text(unwantedWords[index], style = MaterialTheme.typography.bodyMedium)
+                items(currentUnwantedWords.size) { index ->
+                    Text(currentUnwantedWords[index], style = MaterialTheme.typography.bodyMedium)
                 }
             }
 
@@ -145,13 +146,8 @@ fun FilterScreen(navController: NavController, onApplyFilters: (String, String, 
             // Apply Filters Button
             Button(
                 onClick = {
-                    val formattedDateRange = if (dateRange != "Odaberite opseg datuma") {
-                        dateRange
-                    } else {
-                        ""
-                    }
-                    onApplyFilters(selectedCategory, formattedDateRange, unwantedWords)
-                    navController.popBackStack() // Navigate back to NewsFeedScreen
+                    onApplyFilters(currentCategory, currentDateRange, currentUnwantedWords)
+                    navController.popBackStack()
                 },
                 modifier = Modifier
                     .fillMaxWidth()
@@ -160,5 +156,76 @@ fun FilterScreen(navController: NavController, onApplyFilters: (String, String, 
                 Text("Primijeni filtere")
             }
         }
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun DateRangePickerModal(
+    onDismiss: () -> Unit,
+    onDateRangeSelected: (Long?, Long?) -> Unit
+) {
+    val dateRangePickerState = rememberDateRangePickerState()
+
+    DatePickerDialog(
+        onDismissRequest = onDismiss,
+        confirmButton = {
+            TextButton(
+                onClick = {
+                    onDateRangeSelected(
+                        dateRangePickerState.selectedStartDateMillis,
+                        dateRangePickerState.selectedEndDateMillis
+                    )
+                    onDismiss()
+                }
+            ) {
+                Text("OK")
+            }
+        },
+        dismissButton = {
+            TextButton(onClick = onDismiss) {
+                Text("Poništi")
+            }
+        }
+    ) {
+        DateRangePicker(
+            state = dateRangePickerState,
+            title = {
+                Text(
+                    text = "Izaberite opseg datuma",
+                    style = MaterialTheme.typography.titleMedium
+                )
+            },
+            headline = {
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 16.dp),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Text(
+                        text = dateRangePickerState.selectedStartDateMillis?.let {
+                            SimpleDateFormat("d. MMM. yyyy", Locale.getDefault()).format(Date(it))
+                        } ?: "Datum početka",
+                        style = MaterialTheme.typography.bodyMedium.copy(fontSize = 16.sp),
+                        maxLines = 1,
+                        textAlign = TextAlign.Start
+                    )
+                    Text(
+                        text = dateRangePickerState.selectedEndDateMillis?.let {
+                            SimpleDateFormat("d. MMM. yyyy", Locale.getDefault()).format(Date(it))
+                        } ?: "Datum završetka",
+                        style = MaterialTheme.typography.bodyMedium.copy(fontSize = 16.sp),
+                        maxLines = 1,
+                        textAlign = TextAlign.End
+                    )
+                }
+            },
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(400.dp)
+                .padding(10.dp)
+        )
     }
 }

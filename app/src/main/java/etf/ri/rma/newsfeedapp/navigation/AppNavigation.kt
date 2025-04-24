@@ -1,38 +1,39 @@
 package etf.ri.rma.newsfeedapp.navigation
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
+
+import androidx.compose.runtime.*
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
+import etf.ri.rma.newsfeedapp.data.NewsData
+import etf.ri.rma.newsfeedapp.model.NewsItem
 import etf.ri.rma.newsfeedapp.screen.FilterScreen
 import etf.ri.rma.newsfeedapp.screen.NewsDetailsScreen
 import etf.ri.rma.newsfeedapp.screen.NewsFeedScreen
-import etf.ri.rma.newsfeedapp.model.NewsItem
 import etf.ri.rma.newsfeedapp.screen.onApplyFilters
-
 @Composable
 fun AppNavigation(navController: NavHostController) {
-    var filters by remember { mutableStateOf(Triple("All", "", emptyList<String>())) }
-    var newsItemsState by remember { mutableStateOf(emptyList<NewsItem>()) }
+    var filters by remember { mutableStateOf(Triple("All", "", emptyList<String>())) } // Default to "All"
+    val allNewsItems = remember { NewsData.getAllNews() }
+    var newsItemsState by remember { mutableStateOf(allNewsItems) }
 
     NavHost(navController = navController, startDestination = "/home") {
         composable("/home") {
             NewsFeedScreen(
                 navController = navController,
-                filters = filters
+                filters = filters,
+                newsItems = newsItemsState
             )
         }
         composable("/filters") {
             FilterScreen(
                 navController = navController,
-
+                selectedCategory = filters.first,
+                dateRange = filters.second,
+                unwantedWords = filters.third,
                 onApplyFilters = { category, dateRange, unwantedWords ->
-                    val filteredList = onApplyFilters(category, dateRange, unwantedWords, newsItemsState)
+                    val filteredList = onApplyFilters(category, dateRange, unwantedWords, allNewsItems)
                     filters = Triple(category, dateRange, unwantedWords)
-                    newsItemsState = filteredList
+                    newsItemsState = filteredList // Update filtered news
                 }
             )
         }

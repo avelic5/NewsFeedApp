@@ -13,27 +13,38 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import java.text.SimpleDateFormat
+import java.util.*
 import androidx.compose.ui.platform.testTag
 import androidx.navigation.NavController
 import etf.ri.rma.newsfeedapp.data.NewsData
-import java.text.SimpleDateFormat
+import etf.ri.rma.newsfeedapp.model.NewsItem
+
+
 import java.util.Locale
+import kotlin.text.category
 
 @Composable
 fun NewsFeedScreen(
     navController: NavController,
-    filters: Triple<String, String, List<String>>
+    filters: Triple<String, String, List<String>>, // (Category, DateRange, UnwantedWords)
+    newsItems: List<NewsItem>
 ) {
-    val (category, dateRange, unwantedWords) = filters
-    var selectedCategory by remember { mutableStateOf("All") }
+    var selectedCategory by remember { mutableStateOf(filters.first) }
+    val selectedDateRange = filters.second
+    val unwantedWords = filters.third
 
-    val newsItems = NewsData.getAllNews().filter { newsItem ->
-        // Apply category filter
+    // Filter news items based on category, date range, and unwanted words
+    val filteredNewsItems = newsItems.filter { newsItem ->
+        // Filter by category
         (newsItem.category == selectedCategory || selectedCategory == "All") &&
-                // Apply date range filter
-                (dateRange.isEmpty() || isWithinDateRange(newsItem.publishedDate, dateRange)) &&
-                // Apply unwanted words filter
-                unwantedWords.none { word -> newsItem.title.contains(word, ignoreCase = true) }
+                // Filter by date range
+                isWithinDateRange(newsItem.publishedDate, selectedDateRange) &&
+                // Filter by unwanted words
+                unwantedWords.none { unwantedWord ->
+                    newsItem.title.contains(unwantedWord, ignoreCase = true) ||
+                            (newsItem.snippet?.contains(unwantedWord, ignoreCase = true) == true)
+                }
     }
 
     Surface(
@@ -53,18 +64,29 @@ fun NewsFeedScreen(
             )
             // News List
             NewsList(
-                newsItems = newsItems,
-                selectedCategory = selectedCategory, // Pass the selectedCategory here
+                newsItems = filteredNewsItems,
+                selectedCategory = selectedCategory,
                 onNewsClick = { newsId -> navController.navigate("/details/$newsId") }
             )
         }
     }
 }
 
-// Helper function to check if a date is within the selected range
 fun isWithinDateRange(publishedDate: String, dateRange: String): Boolean {
-    val dateFormat = SimpleDateFormat("dd-MM-yyyy", Locale.getDefault())
-    val (startDate, endDate) = dateRange.split(" - ").map { dateFormat.parse(it) }
-    val newsDate = dateFormat.parse(publishedDate)
-    return newsDate in startDate..endDate
+    if (dateRange.isEmpty() || !dateRange.contains(" - ")) return true
+
+    return try {
+        val dateFormat = SimpleDateFormat("dd-MM-yyyy", Locale.getDefault())
+        dateFormat.isLenient = false // Prevents incorrect parsing
+
+        val (startStr, endStr) = dateRange.split(" - ")
+        val startDate = dateFormat.parse(startStr)
+        val endDate = dateFormat.parse(endStr)
+        val pubDate = dateFormat.parse(publishedDate)
+
+        pubDate != null && startDate != null && endDate != null &&
+                !pubDate.before(startDate) && !pubDate.after(endDate)
+    } catch (e: Exception) {
+        false // Return false if parsing fails
+    }
 }
