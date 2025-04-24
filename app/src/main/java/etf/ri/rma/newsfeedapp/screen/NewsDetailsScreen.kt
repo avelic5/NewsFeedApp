@@ -1,4 +1,5 @@
 package etf.ri.rma.newsfeedapp.screen
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
@@ -9,6 +10,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import etf.ri.rma.newsfeedapp.data.NewsData
@@ -48,13 +50,23 @@ fun NewsDetailsScreen(navController: NavController, newsId: String) {
             Text("Povezane vijesti iz iste kategorije", style = MaterialTheme.typography.titleMedium)
             Spacer(modifier = Modifier.height(8.dp))
             relatedNews.forEachIndexed { index, relatedItem ->
-                Text(
-                    text = relatedItem.title,
+                Box(
                     modifier = Modifier
-                        .testTag("related_news_title_${index + 1}")
-                        .clickable { navController.navigate("/details/${relatedItem.id}") }
+                        .fillMaxWidth()
                         .padding(vertical = 4.dp)
-                )
+                        .background(MaterialTheme.colorScheme.primary.copy(alpha = 0.1f)) // Light background
+                        .clickable { navController.navigate("/details/${relatedItem.id}") }
+                        .testTag("related_news_title_${index + 1}")
+                ) {
+                    Text(
+                        text = relatedItem.title,
+                        style = MaterialTheme.typography.bodyMedium.copy(
+                            color = MaterialTheme.colorScheme.primary,
+                            fontWeight = FontWeight.Bold
+                        ),
+                        modifier = Modifier.padding(8.dp) // Padding inside the box
+                    )
+                }
             }
 
             Spacer(modifier = Modifier.height(16.dp))

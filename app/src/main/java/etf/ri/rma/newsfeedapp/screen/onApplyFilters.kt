@@ -2,7 +2,6 @@ package etf.ri.rma.newsfeedapp.screen
 import etf.ri.rma.newsfeedapp.model.NewsItem
 import java.text.SimpleDateFormat
 import java.util.*
-
 fun onApplyFilters(
     category: String,
     dateRange: String,
@@ -15,17 +14,16 @@ fun onApplyFilters(
         filteredList = filteredList.filter { it.category == category }
     }
 
-    if (dateRange.isNotEmpty() && dateRange.contains(" - ")) {
+    if (dateRange.isNotEmpty() && dateRange.contains("-")) {
         try {
             val (startDateString, endDateString) = dateRange.split(" - ")
             val formatter = SimpleDateFormat("dd-MM-yyyy", Locale.getDefault())
             formatter.isLenient = false
-
-            val startDate = formatter.parse(startDateString)
-            val endDate = formatter.parse(endDateString)
+            val startDate = formatter.parse(startDateString.trim())
+            val endDate = formatter.parse(endDateString.trim())
 
             filteredList = filteredList.filter {
-                val itemDate = formatter.parse(it.publishedDate)
+                val itemDate = formatter.parse(it.publishedDate.trim())
                 itemDate != null && itemDate in startDate..endDate
             }
         } catch (e: Exception) {

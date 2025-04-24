@@ -71,21 +71,21 @@ fun NewsFeedScreen(
         }
     }
 }
-
 fun isWithinDateRange(publishedDate: String, dateRange: String): Boolean {
-    if (dateRange.isEmpty() || !dateRange.contains(" - ")) return true
+    if (dateRange.isEmpty() || dateRange == "Svi datumi") return true
+
+    // Formatter for the new date format
+    val formatter = SimpleDateFormat("dd-MM-yyyy", Locale.getDefault())
 
     return try {
-        val dateFormat = SimpleDateFormat("dd-MM-yyyy", Locale.getDefault())
-        dateFormat.isLenient = false // Prevents incorrect parsing
+        val (startDateString, endDateString) = dateRange.split(" - ") // Adjusted to match "DD-MM-YYYY - DD-MM-YYYY"
+        val startDate = formatter.parse(startDateString.trim())
+        val endDate = formatter.parse(endDateString.trim())
+        val itemDate = formatter.parse(publishedDate.trim())
 
-        val (startStr, endStr) = dateRange.split(" - ")
-        val startDate = dateFormat.parse(startStr)
-        val endDate = dateFormat.parse(endStr)
-        val pubDate = dateFormat.parse(publishedDate)
-
-        pubDate != null && startDate != null && endDate != null &&
-                !pubDate.before(startDate) && !pubDate.after(endDate)
+        // Check if dates are valid and compare them
+        itemDate != null && startDate != null && endDate != null &&
+                !itemDate.before(startDate) && !itemDate.after(endDate)
     } catch (e: Exception) {
         false // Return false if parsing fails
     }

@@ -14,7 +14,7 @@ import androidx.navigation.NavController
 import java.text.SimpleDateFormat
 import java.util.*
 
-@OptIn(ExperimentalMaterial3Api::class)
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class)
 @Composable
 fun FilterScreen(
     navController: NavController,
@@ -40,12 +40,21 @@ fun FilterScreen(
                 style = MaterialTheme.typography.titleMedium,
                 modifier = Modifier.padding(bottom = 8.dp)
             )
-            val categories = listOf("All", "Politika", "Sport", "Nauka/tehnologija")
-            Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            val categories = listOf("All", "Politika", "Sport", "Nauka/tehnologija","Muzika")
+            FlowRow(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 categories.forEach { category ->
+                    val testTag = when (category) {
+                        "Politika" -> "filter_chip_pol"
+                        "Sport" -> "filter_chip_spo"
+                        "Nauka/tehnologija" -> "filter_chip_sci"
+                        "All" -> "filter_chip_all"
+                        "Muzika" -> "filter_chip_none"
+                        else -> ""
+                    }
                     AssistChip(
                         onClick = { currentCategory = category },
                         label = { Text(category) },
+                        modifier = Modifier.testTag(testTag),
                         colors = AssistChipDefaults.assistChipColors(
                             containerColor = if (currentCategory == category) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.surface
                         )
@@ -72,7 +81,7 @@ fun FilterScreen(
                     text = currentDateRange,
                     style = MaterialTheme.typography.bodyMedium.copy(fontSize = 16.sp),
                     textAlign = TextAlign.Start,
-                    modifier = Modifier.weight(1f)
+                    modifier = Modifier.weight(1f).testTag("filter_daterange_display")
                 )
                 Button(
                     onClick = { showDatePicker = true },
@@ -89,10 +98,10 @@ fun FilterScreen(
                     onDismiss = { showDatePicker = false },
                     onDateRangeSelected = { startDate, endDate ->
                         currentDateRange = if (startDate != null && endDate != null) {
-                            val formatter = SimpleDateFormat("d. MMM. yyyy", Locale.getDefault())
+                            val formatter = SimpleDateFormat("dd-MM-yyyy", Locale.getDefault())
                             "${formatter.format(Date(startDate))} - ${formatter.format(Date(endDate))}"
                         } else {
-                            "Svi datumi" // Default vrednost
+                            "Svi datumi" // Default value
                         }
                         showDatePicker = false
                     }
@@ -158,7 +167,6 @@ fun FilterScreen(
         }
     }
 }
-
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun DateRangePickerModal(
@@ -206,7 +214,7 @@ fun DateRangePickerModal(
                 ) {
                     Text(
                         text = dateRangePickerState.selectedStartDateMillis?.let {
-                            SimpleDateFormat("d. MMM. yyyy", Locale.getDefault()).format(Date(it))
+                            SimpleDateFormat("d.MMM.yyyy", Locale.getDefault()).format(Date(it))
                         } ?: "Datum početka",
                         style = MaterialTheme.typography.bodyMedium.copy(fontSize = 16.sp),
                         maxLines = 1,
@@ -214,7 +222,7 @@ fun DateRangePickerModal(
                     )
                     Text(
                         text = dateRangePickerState.selectedEndDateMillis?.let {
-                            SimpleDateFormat("d. MMM. yyyy", Locale.getDefault()).format(Date(it))
+                            SimpleDateFormat("d.MMM.yyyy", Locale.getDefault()).format(Date(it))
                         } ?: "Datum završetka",
                         style = MaterialTheme.typography.bodyMedium.copy(fontSize = 16.sp),
                         maxLines = 1,
