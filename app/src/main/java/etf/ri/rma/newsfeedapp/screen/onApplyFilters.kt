@@ -10,9 +10,7 @@ fun onApplyFilters(
 ): List<NewsItem> {
     var filteredList = newsItems
 
-    if (category != "All") {
-        filteredList = filteredList.filter { it.category == category }
-    }
+
 
     if (dateRange.isNotEmpty() && dateRange.contains("-")) {
         try {

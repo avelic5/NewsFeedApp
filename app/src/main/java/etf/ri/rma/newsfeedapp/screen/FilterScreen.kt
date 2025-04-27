@@ -99,7 +99,7 @@ fun FilterScreen(
                     onDateRangeSelected = { startDate, endDate ->
                         currentDateRange = if (startDate != null && endDate != null) {
                             val formatter = SimpleDateFormat("dd-MM-yyyy", Locale.getDefault())
-                            "${formatter.format(Date(startDate))} - ${formatter.format(Date(endDate))}"
+                            "${formatter.format(Date(startDate))};${formatter.format(Date(endDate))}"
                         } else {
                             "Svi datumi" // Default value
                         }

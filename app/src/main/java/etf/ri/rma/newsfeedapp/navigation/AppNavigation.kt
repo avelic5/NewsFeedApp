@@ -10,6 +10,7 @@ import etf.ri.rma.newsfeedapp.screen.FilterScreen
 import etf.ri.rma.newsfeedapp.screen.NewsDetailsScreen
 import etf.ri.rma.newsfeedapp.screen.NewsFeedScreen
 import etf.ri.rma.newsfeedapp.screen.onApplyFilters
+
 @Composable
 fun AppNavigation(navController: NavHostController) {
     var filters by remember { mutableStateOf(Triple("All", "", emptyList<String>())) } // Default to "All"
@@ -21,7 +22,10 @@ fun AppNavigation(navController: NavHostController) {
             NewsFeedScreen(
                 navController = navController,
                 filters = filters,
-                newsItems = newsItemsState
+                newsItems = newsItemsState,
+                onCategorySelected = { category ->
+                    filters = filters.copy(first = category) // Update filters.first
+                }
             )
         }
         composable("/filters") {

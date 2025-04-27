@@ -71,7 +71,7 @@ fun NewsDetailsScreen(navController: NavController, newsId: String) {
 
             Spacer(modifier = Modifier.height(16.dp))
             Button(
-                onClick = { navController.popBackStack() },
+                onClick = { navController.navigate("/home") },
                 modifier = Modifier.testTag("details_close_button")
             ) {
                 Text("Zatvori detalje")

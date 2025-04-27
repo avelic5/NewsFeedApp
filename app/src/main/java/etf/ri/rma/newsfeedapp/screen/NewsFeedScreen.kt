@@ -17,18 +17,19 @@ import java.text.SimpleDateFormat
 import java.util.*
 import androidx.compose.ui.platform.testTag
 import androidx.navigation.NavController
+import androidx.navigation.compose.rememberNavController
 import etf.ri.rma.newsfeedapp.data.NewsData
 import etf.ri.rma.newsfeedapp.model.NewsItem
 
 
 import java.util.Locale
-import kotlin.text.category
 
 @Composable
 fun NewsFeedScreen(
     navController: NavController,
-    filters: Triple<String, String, List<String>>, // (Category, DateRange, UnwantedWords)
-    newsItems: List<NewsItem>
+    filters: Triple<String, String, List<String>> = Triple("All", "Svi datumi", emptyList()),
+    newsItems: List<NewsItem> = emptyList(),
+    onCategorySelected: (String) -> Unit
 ) {
     var selectedCategory by remember { mutableStateOf(filters.first) }
     val selectedDateRange = filters.second
@@ -55,7 +56,10 @@ fun NewsFeedScreen(
             // Filter Chips
             FilterChips(
                 selectedCategory = selectedCategory,
-                onCategorySelected = { category -> selectedCategory = category }
+                onCategorySelected = { category ->
+                    selectedCategory = category
+                    onCategorySelected(category) // Notify AppNavigation about category change
+                }
             )
             AssistChip(
                 onClick = { navController.navigate("/filters") },
@@ -71,6 +75,7 @@ fun NewsFeedScreen(
         }
     }
 }
+
 fun isWithinDateRange(publishedDate: String, dateRange: String): Boolean {
     if (dateRange.isEmpty() || dateRange == "Svi datumi") return true
 
@@ -78,7 +83,7 @@ fun isWithinDateRange(publishedDate: String, dateRange: String): Boolean {
     val formatter = SimpleDateFormat("dd-MM-yyyy", Locale.getDefault())
 
     return try {
-        val (startDateString, endDateString) = dateRange.split(" - ") // Adjusted to match "DD-MM-YYYY - DD-MM-YYYY"
+        val (startDateString, endDateString) = dateRange.split(";")
         val startDate = formatter.parse(startDateString.trim())
         val endDate = formatter.parse(endDateString.trim())
         val itemDate = formatter.parse(publishedDate.trim())
