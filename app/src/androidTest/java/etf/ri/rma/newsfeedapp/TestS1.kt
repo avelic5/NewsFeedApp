@@ -33,7 +33,12 @@ class TestS1 {
     @Before
     fun setContentForTests() {
         assertTrue (message = "Nemate dovoljno vijesti!", actual = NewsData.getAllNews().count()>=20)
-        composeTestRule.setContent { NewsFeedScreen() }
+        composeTestRule.setContent { NewsFeedScreen(
+            navController = TODO(),
+            filters = TODO(),
+            newsItems = TODO(),
+            onCategorySelected = TODO()
+        ) }
     }
 
 

@@ -14,26 +14,41 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import etf.ri.rma.newsfeedapp.data.NewsData
+import etf.ri.rma.newsfeedapp.model.NewsItem
 import java.text.SimpleDateFormat
+import java.time.LocalDate
+import java.time.format.DateTimeFormatter
+import java.time.temporal.ChronoUnit
 import java.util.*
 @Composable
 fun NewsDetailsScreen(navController: NavController, newsId: String) {
     val dateFormat = SimpleDateFormat("dd-MM-yyyy", Locale.getDefault())
     val newsItem = NewsData.getAllNews().find { it.id == newsId }
-    val newsItemDate = newsItem?.publishedDate?.let { dateFormat.parse(it)?.time } ?: 0L
+    var relatedNews:List<NewsItem>
 
-    val relatedNews = NewsData.getAllNews()
-        .filter { it.category == newsItem?.category && it.id != newsId }
-        .sortedWith(compareBy({ kotlin.math.abs(
-            dateFormat.parse(it.publishedDate)?.time ?: (0L - newsItemDate)
-        ) }, { it.title }))
-        .take(2)
+
+
+    val formatter = DateTimeFormatter.ofPattern("dd-MM-yyyy")
+    val currentNews = NewsData.getAllNews().find { it.id == newsId }
+
+// Get related news from the same category, excluding current news
+    relatedNews = NewsData.getAllNews()
+        .filter { it.category == currentNews?.category && it.id != newsId }
+        .sortedWith(
+            compareBy<NewsItem> { news ->
+                val newsDate = LocalDate.parse(news.publishedDate, formatter)
+                val currentDate = LocalDate.parse(currentNews?.publishedDate, formatter)
+                Math.abs(ChronoUnit.DAYS.between(newsDate, currentDate))
+            }.thenBy { it.title }
+        )
+        .take(2) // Take only 2 related news items
 
     Surface(
         modifier = Modifier.fillMaxSize(),
         color = MaterialTheme.colorScheme.background
     ) {
-        Column(modifier = Modifier.padding(16.dp)) {
+        Column(modifier = Modifier.padding(16.dp)
+        ) {
             // News Details
             Text(newsItem?.title ?: "N/A", style = MaterialTheme.typography.titleLarge, modifier = Modifier.testTag("details_title"))
             Spacer(modifier = Modifier.height(8.dp))
@@ -55,7 +70,8 @@ fun NewsDetailsScreen(navController: NavController, newsId: String) {
                         .fillMaxWidth()
                         .padding(vertical = 4.dp)
                         .background(MaterialTheme.colorScheme.primary.copy(alpha = 0.1f)) // Light background
-                        .clickable { navController.navigate("/details/${relatedItem.id}") }
+                        .clickable { navController.popBackStack()
+                            navController.navigate("/details/${relatedItem.id}") }
                         .testTag("related_news_title_${index + 1}")
                 ) {
                     Text(

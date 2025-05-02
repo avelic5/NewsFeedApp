@@ -7,6 +7,8 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.semantics.selected
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -54,9 +56,12 @@ fun FilterScreen(
                     AssistChip(
                         onClick = { currentCategory = category },
                         label = { Text(category) },
-                        modifier = Modifier.testTag(testTag),
+                        modifier = Modifier
+                            .testTag(testTag)
+                            .semantics { selected = currentCategory == category },
                         colors = AssistChipDefaults.assistChipColors(
-                            containerColor = if (currentCategory == category) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.surface
+                            containerColor = if (currentCategory == category) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.surface,
+                            labelColor = if (currentCategory == category) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onSurface
                         )
                     )
                 }
