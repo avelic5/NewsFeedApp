@@ -15,7 +15,7 @@ import java.util.*
 import kotlin.collections.HashMap
 
 object NewsDAO {
-    private val apiToken = "wGikBCnKzNcykeizwmW9Ihc4IALhG6uEt8QZSUVU" // 🔁 zamijeni s pravim tokenom
+    private val apiToken = "wGikBCnKzNcykeizwmW9Ihc4IALhG6uEt8QZSUVU"
     private val baseUrl = "https://api.thenewsapi.com/v1/"
 
     private val newsCache = mutableListOf<NewsItem>()
@@ -200,7 +200,7 @@ object NewsDAO {
 
     suspend fun getSimilarStories(uuid: String): List<NewsItem> {
         if (!uuid.matches(Regex("[a-fA-F0-9\\-]{36}")))
-            throw InvalidUUIDException() as Throwable
+            throw InvalidUUIDException()
 
         if (similarNewsCache.containsKey(uuid))
             return similarNewsCache[uuid]!!

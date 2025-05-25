@@ -7,10 +7,12 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import coil.compose.AsyncImage
+import etf.ri.rma.newsfeedapp.R
 import etf.ri.rma.newsfeedapp.model.NewsItem
 import etf.ri.rma.newsfeedapp.repository.NewsDAO
 import etf.ri.rma.newsfeedapp.repository.ImaggaDAO
@@ -31,7 +33,7 @@ fun NewsDetailsScreen(navController: NavController, newsId: String) {
         newsItem = item
 
         item?.let {
-            // ✅ Ako već ima imageTags, ne zovemo API
+
             if (it.imageTags.isNotEmpty()) {
                 tags = it.imageTags
             } else if (!it.imageUrl.isNullOrBlank()) {
@@ -68,10 +70,11 @@ fun NewsDetailsScreen(navController: NavController, newsId: String) {
             Text(newsItem!!.title, style = MaterialTheme.typography.titleLarge, modifier = Modifier.testTag("details_title"))
             Spacer(modifier = Modifier.height(8.dp))
 
-            // ✅ Prikaz slike iz imageUrl
+
             newsItem!!.imageUrl?.let { url ->
                 AsyncImage(
                     model = url,
+                    error=painterResource(id = R.drawable.vijesti),
                     contentDescription = "Slika vijesti",
                     modifier = Modifier
                         .fillMaxWidth()
