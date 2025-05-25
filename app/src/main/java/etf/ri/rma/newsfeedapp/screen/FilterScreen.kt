@@ -15,7 +15,6 @@ import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
 import java.text.SimpleDateFormat
 import java.util.*
-
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class)
 @Composable
 fun FilterScreen(
@@ -36,43 +35,53 @@ fun FilterScreen(
         color = MaterialTheme.colorScheme.background
     ) {
         Column(modifier = Modifier.padding(16.dp)) {
-            // Category Chips
+
+            // Kategorije
             Text(
                 "KATEGORIJE:",
                 style = MaterialTheme.typography.titleMedium,
                 modifier = Modifier.padding(bottom = 8.dp)
             )
-            val categories = listOf(
-                "all", "general", "science", "sports", "business",
-                "health", "entertainment", "tech", "politics", "food", "travel"
+
+            val categories = listOf("all", "politics", "sports", "science", "music","tech")
+            val labels = mapOf(
+                "all" to "All",
+                "politics" to "Politika",
+                "sports" to "Sport",
+                "science" to "Nauka/tehnologija",
+                "tech" to "Nauka/tehnologija",
+                "music" to "Muzika"
             )
+            val testTags = mapOf(
+                "all" to "filter_chip_all",
+                "politics" to "filter_chip_pol",
+                "sports" to "filter_chip_spo",
+                "science" to "filter_chip_sci",
+                "tech" to "filter_chip_sci",
+                "music" to "filter_chip_none"
+            )
+
             FlowRow(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 categories.forEach { category ->
-                    val testTag = when (category) {
-                        "Politika" -> "filter_chip_pol"
-                        "Sport" -> "filter_chip_spo"
-                        "Nauka/tehnologija" -> "filter_chip_sci"
-                        "All" -> "filter_chip_all"
-                        "Muzika" -> "filter_chip_none"
-                        else -> ""
-                    }
-                    AssistChip(
-                        onClick = { currentCategory = category },
-                        label = { Text(category.replaceFirstChar { it.uppercase() }) },
-                        modifier = Modifier
-                            .testTag(testTag)
-                            .semantics { selected = currentCategory == category },
-                        colors = AssistChipDefaults.assistChipColors(
-                            containerColor = if (currentCategory == category) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.surface,
-                            labelColor = if (currentCategory == category) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onSurface
+                    if(category!="tech") {
+                        AssistChip(
+                            onClick = { currentCategory = category },
+                            label = { Text(labels[category] ?: category) },
+                            modifier = Modifier
+                                .testTag(testTags[category] ?: "")
+                                .semantics { selected = currentCategory == category },
+                            colors = AssistChipDefaults.assistChipColors(
+                                containerColor = if (currentCategory == category) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.surface,
+                                labelColor = if (currentCategory == category) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onSurface
+                            )
                         )
-                    )
+                    }
                 }
             }
 
             Spacer(modifier = Modifier.height(16.dp))
 
-            // Date Range Picker
+            // Izbor datuma
             Text(
                 "Izaberite opseg datuma:",
                 style = MaterialTheme.typography.titleMedium,
@@ -89,7 +98,9 @@ fun FilterScreen(
                     text = currentDateRange,
                     style = MaterialTheme.typography.bodyMedium.copy(fontSize = 16.sp),
                     textAlign = TextAlign.Start,
-                    modifier = Modifier.weight(1f).testTag("filter_daterange_display")
+                    modifier = Modifier
+                        .weight(1f)
+                        .testTag("filter_daterange_display")
                 )
                 Button(
                     onClick = { showDatePicker = true },
@@ -109,7 +120,7 @@ fun FilterScreen(
                             val formatter = SimpleDateFormat("dd-MM-yyyy", Locale.getDefault())
                             "${formatter.format(Date(startDate))};${formatter.format(Date(endDate))}"
                         } else {
-                            "Svi datumi" // Default value
+                            "Svi datumi"
                         }
                         showDatePicker = false
                     }
@@ -118,7 +129,7 @@ fun FilterScreen(
 
             Spacer(modifier = Modifier.height(16.dp))
 
-            // Unwanted Words Filter
+            // Nepoželjne riječi
             Text(
                 "Nepoželjne riječi:",
                 style = MaterialTheme.typography.titleMedium,
@@ -160,7 +171,7 @@ fun FilterScreen(
 
             Spacer(modifier = Modifier.height(16.dp))
 
-            // Apply Filters Button
+            // Dugme za primjenu filtera
             Button(
                 onClick = {
                     onApplyFilters(currentCategory, currentDateRange, currentUnwantedWords)
@@ -175,6 +186,7 @@ fun FilterScreen(
         }
     }
 }
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun DateRangePickerModal(

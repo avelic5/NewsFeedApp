@@ -16,7 +16,15 @@ fun NewsList(
     onNewsClick: (String) -> Unit
 ) {
     if (newsItems.isEmpty()) {
-        MessageCard("Nema pronađenih vijesti u kategoriji ${selectedCategory.replaceFirstChar { it.uppercase() }}")
+        val labels = mapOf(
+            "All" to "All",
+            "Politics" to "Politika",
+            "Sports" to "Sport",
+            "Science" to "Nauka/tehnologija",
+            "Tech" to "Nauka/tehnologija",
+            "Music" to "Muzika"
+        )
+        MessageCard("Nema pronađenih vijesti u kategoriji ${labels[selectedCategory.replaceFirstChar { it.uppercase() }]}")
     } else {
         LazyColumn(modifier = Modifier.fillMaxSize().testTag("news_list")) {
             items(newsItems) { newsItem ->

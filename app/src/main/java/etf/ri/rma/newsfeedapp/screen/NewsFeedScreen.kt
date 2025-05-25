@@ -71,14 +71,23 @@ fun NewsFeedScreen(
 
             // Filteriranje po datumu i nepoželjnim riječima
             val filteredNewsItems = newsItemsInternal.filter { newsItem ->
-                (selectedCategory == "all" || newsItem.category.equals(selectedCategory, ignoreCase = true))
-                        &&
+                val categoryMatches = when (selectedCategory.lowercase()) {
+                    "all" -> true
+                    "Nauka/tehnologija" -> newsItem.category.equals("science", ignoreCase = true) ||
+                            newsItem.category.equals("tech", ignoreCase = true)
+                    "Politika" -> newsItem.category.equals("politics", ignoreCase = true)
+                    "Sport" -> newsItem.category.equals("sports", ignoreCase = true)
+                    else -> newsItem.category.equals(selectedCategory, ignoreCase = true)
+                }
+
+                categoryMatches &&
                         isWithinDateRange(newsItem.publishedDate, selectedDateRange) &&
                         unwantedWords.none { unwantedWord ->
                             newsItem.title.contains(unwantedWord, ignoreCase = true) ||
                                     (newsItem.snippet?.contains(unwantedWord, ignoreCase = true) == true)
                         }
             }
+
 
             NewsList(
                 newsItems = filteredNewsItems,

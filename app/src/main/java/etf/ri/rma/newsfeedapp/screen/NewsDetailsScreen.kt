@@ -46,7 +46,7 @@ fun NewsDetailsScreen(navController: NavController, newsId: String) {
                 }
             }
 
-            // ✅ Pronađi slične vijesti samo ako nisu već dohvaćene
+
             if (relatedNews.isEmpty()) {
                 try {
                     relatedNews = NewsDAO.getSimilarStories(it.uuid)
@@ -131,7 +131,9 @@ fun NewsDetailsScreen(navController: NavController, newsId: String) {
 
             Spacer(modifier = Modifier.height(16.dp))
             Button(
-                onClick = { navController.navigate("/home") },
+                onClick =  {
+                    navController.navigate("/home?refresh=true")
+                 },
                 modifier = Modifier.testTag("details_close_button")
             ) {
                 Text("Zatvori detalje")
