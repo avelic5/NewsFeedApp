@@ -42,7 +42,10 @@ fun FilterScreen(
                 style = MaterialTheme.typography.titleMedium,
                 modifier = Modifier.padding(bottom = 8.dp)
             )
-            val categories = listOf("All", "Politika", "Sport", "Nauka/tehnologija","Muzika")
+            val categories = listOf(
+                "all", "general", "science", "sports", "business",
+                "health", "entertainment", "tech", "politics", "food", "travel"
+            )
             FlowRow(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 categories.forEach { category ->
                     val testTag = when (category) {
@@ -55,7 +58,7 @@ fun FilterScreen(
                     }
                     AssistChip(
                         onClick = { currentCategory = category },
-                        label = { Text(category) },
+                        label = { Text(category.replaceFirstChar { it.uppercase() }) },
                         modifier = Modifier
                             .testTag(testTag)
                             .semantics { selected = currentCategory == category },

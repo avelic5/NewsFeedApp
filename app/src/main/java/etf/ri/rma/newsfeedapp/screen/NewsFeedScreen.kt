@@ -11,6 +11,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import java.text.SimpleDateFormat
@@ -20,53 +21,65 @@ import androidx.navigation.NavController
 import androidx.navigation.compose.rememberNavController
 import etf.ri.rma.newsfeedapp.data.NewsData
 import etf.ri.rma.newsfeedapp.model.NewsItem
+import etf.ri.rma.newsfeedapp.repository.NewsDAO
+import kotlinx.coroutines.launch
+
 
 
 import java.util.Locale
-
 @Composable
 fun NewsFeedScreen(
     navController: NavController,
-    filters: Triple<String, String, List<String>> = Triple("All", "Svi datumi", emptyList()),
+    filters: Triple<String, String, List<String>> = Triple("all", "Svi datumi", emptyList()),
     newsItems: List<NewsItem> = emptyList(),
     onCategorySelected: (String) -> Unit
 ) {
+    val coroutineScope = rememberCoroutineScope()
+
     var selectedCategory by remember { mutableStateOf(filters.first) }
     val selectedDateRange = filters.second
     val unwantedWords = filters.third
 
-    // Filter news items based on category, date range, and unwanted words
-    val filteredNewsItems = newsItems.filter { newsItem ->
-        // Filter by category
-        (newsItem.category == selectedCategory || selectedCategory == "All") &&
-                // Filter by date range
-                isWithinDateRange(newsItem.publishedDate, selectedDateRange) &&
-                // Filter by unwanted words
-                unwantedWords.none { unwantedWord ->
-                    newsItem.title.contains(unwantedWord, ignoreCase = true) ||
-                            (newsItem.snippet?.contains(unwantedWord, ignoreCase = true) == true)
-                }
-    }
+    var newsItemsInternal by remember { mutableStateOf(newsItems) }
 
     Surface(
         modifier = Modifier.fillMaxSize(),
         color = MaterialTheme.colorScheme.background
     ) {
         Column(modifier = Modifier.fillMaxSize()) {
-            // Filter Chips
             FilterChips(
                 selectedCategory = selectedCategory,
                 onCategorySelected = { category ->
                     selectedCategory = category
-                    onCategorySelected(category) // Notify AppNavigation about category change
+                    onCategorySelected(category)
+
+                    coroutineScope.launch {
+                        newsItemsInternal = if (category == "all") {
+                            NewsDAO.getAllStories()
+                        } else {
+                            NewsDAO.getTopStoriesByCategory(category)
+                        }
+                    }
                 }
             )
+
             AssistChip(
                 onClick = { navController.navigate("/filters") },
                 modifier = Modifier.testTag("filter_chip_more"),
                 label = { Text("Više filtera ...") }
             )
-            // News List
+
+            // Filteriranje po datumu i nepoželjnim riječima
+            val filteredNewsItems = newsItemsInternal.filter { newsItem ->
+                (selectedCategory == "all" || newsItem.category.equals(selectedCategory, ignoreCase = true))
+                        &&
+                        isWithinDateRange(newsItem.publishedDate, selectedDateRange) &&
+                        unwantedWords.none { unwantedWord ->
+                            newsItem.title.contains(unwantedWord, ignoreCase = true) ||
+                                    (newsItem.snippet?.contains(unwantedWord, ignoreCase = true) == true)
+                        }
+            }
+
             NewsList(
                 newsItems = filteredNewsItems,
                 selectedCategory = selectedCategory,

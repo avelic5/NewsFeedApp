@@ -21,7 +21,7 @@ fun onApplyFilters(
             val endDate = formatter.parse(endDateString.trim())
 
             filteredList = filteredList.filter {
-                val itemDate = formatter.parse(it.publishedDate.trim())
+                val itemDate = formatter.parse(it.publishedDate.toString().trim())
                 itemDate != null && itemDate in startDate..endDate
             }
         } catch (e: Exception) {

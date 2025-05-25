@@ -1,87 +1,128 @@
 package etf.ri.rma.newsfeedapp.screen
+
 import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
-import androidx.compose.material3.Button
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Surface
-import androidx.compose.material3.Text
-import androidx.compose.runtime.Composable
+import androidx.compose.material3.*
+import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
-import etf.ri.rma.newsfeedapp.data.NewsData
+import coil.compose.AsyncImage
 import etf.ri.rma.newsfeedapp.model.NewsItem
+import etf.ri.rma.newsfeedapp.repository.NewsDAO
+import etf.ri.rma.newsfeedapp.repository.ImaggaDAO
+import kotlinx.coroutines.launch
 import java.text.SimpleDateFormat
-import java.time.LocalDate
-import java.time.format.DateTimeFormatter
-import java.time.temporal.ChronoUnit
 import java.util.*
 @Composable
 fun NewsDetailsScreen(navController: NavController, newsId: String) {
-    val dateFormat = SimpleDateFormat("dd-MM-yyyy", Locale.getDefault())
-    val newsItem = NewsData.getAllNews().find { it.id == newsId }
-    var relatedNews:List<NewsItem>
+    val coroutineScope = rememberCoroutineScope()
 
+    var newsItem by remember { mutableStateOf<NewsItem?>(null) }
+    var relatedNews by remember { mutableStateOf<List<NewsItem>>(emptyList()) }
+    var tags by remember { mutableStateOf<List<String>>(emptyList()) }
 
+    LaunchedEffect(newsId) {
+        val allNews = NewsDAO.getAllStories()
+        val item = allNews.find { it.uuid == newsId }
+        newsItem = item
 
-    val formatter = DateTimeFormatter.ofPattern("dd-MM-yyyy")
-    val currentNews = NewsData.getAllNews().find { it.id == newsId }
+        item?.let {
+            // ✅ Ako već ima imageTags, ne zovemo API
+            if (it.imageTags.isNotEmpty()) {
+                tags = it.imageTags
+            } else if (!it.imageUrl.isNullOrBlank()) {
+                try {
+                    val newTags = ImaggaDAO.getTags(it.imageUrl!!)
+                    tags = newTags
+                    it.imageTags.addAll(newTags) // sačuvaj u samom objektu
+                } catch (e: Exception) {
+                    tags = listOf("Greška pri dohvaćanju tagova")
+                }
+            }
 
-// Get related news from the same category, excluding current news
-    relatedNews = NewsData.getAllNews()
-        .filter { it.category == currentNews?.category && it.id != newsId }
-        .sortedWith(
-            compareBy<NewsItem> { news ->
-                val newsDate = LocalDate.parse(news.publishedDate, formatter)
-                val currentDate = LocalDate.parse(currentNews?.publishedDate, formatter)
-                Math.abs(ChronoUnit.DAYS.between(newsDate, currentDate))
-            }.thenBy { it.title }
-        )
-        .take(2) // Take only 2 related news items
+            // ✅ Pronađi slične vijesti samo ako nisu već dohvaćene
+            if (relatedNews.isEmpty()) {
+                try {
+                    relatedNews = NewsDAO.getSimilarStories(it.uuid)
+                } catch (e: Exception) {
+                    relatedNews = emptyList()
+                }
+            }
+        }
+    }
 
     Surface(
         modifier = Modifier.fillMaxSize(),
         color = MaterialTheme.colorScheme.background
     ) {
-        Column(modifier = Modifier.padding(16.dp)
-        ) {
-            // News Details
-            Text(newsItem?.title ?: "N/A", style = MaterialTheme.typography.titleLarge, modifier = Modifier.testTag("details_title"))
-            Spacer(modifier = Modifier.height(8.dp))
-            Text(newsItem?.snippet ?: "N/A", style = MaterialTheme.typography.bodyMedium, modifier = Modifier.testTag("details_snippet"))
-            Spacer(modifier = Modifier.height(8.dp))
-            Text("Kategorija: ${newsItem?.category ?: "N/A"}", modifier = Modifier.testTag("details_category"))
-            Spacer(modifier = Modifier.height(8.dp))
-            Text("Izvor: ${newsItem?.source ?: "N/A"}", modifier = Modifier.testTag("details_source"))
-            Spacer(modifier = Modifier.height(8.dp))
-            Text("Datum: ${newsItem?.publishedDate ?: "N/A"}", modifier = Modifier.testTag("details_date"))
-            Spacer(modifier = Modifier.height(16.dp))
+        if (newsItem == null) {
+            MessageCard("Vijest nije pronađena.")
+            return@Surface
+        }
 
-            // Related News
-            Text("Povezane vijesti iz iste kategorije", style = MaterialTheme.typography.titleMedium)
+        Column(modifier = Modifier.padding(16.dp)) {
+            Text(newsItem!!.title, style = MaterialTheme.typography.titleLarge, modifier = Modifier.testTag("details_title"))
             Spacer(modifier = Modifier.height(8.dp))
-            relatedNews.forEachIndexed { index, relatedItem ->
-                Box(
+
+            // ✅ Prikaz slike iz imageUrl
+            newsItem!!.imageUrl?.let { url ->
+                AsyncImage(
+                    model = url,
+                    contentDescription = "Slika vijesti",
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(vertical = 4.dp)
-                        .background(MaterialTheme.colorScheme.primary.copy(alpha = 0.1f)) // Light background
-                        .clickable { navController.popBackStack()
-                            navController.navigate("/details/${relatedItem.id}") }
-                        .testTag("related_news_title_${index + 1}")
-                ) {
-                    Text(
-                        text = relatedItem.title,
-                        style = MaterialTheme.typography.bodyMedium.copy(
-                            color = MaterialTheme.colorScheme.primary,
-                            fontWeight = FontWeight.Bold
-                        ),
-                        modifier = Modifier.padding(8.dp) // Padding inside the box
-                    )
+                        .height(180.dp)
+                        .padding(bottom = 12.dp)
+                )
+            }
+
+            Text(newsItem!!.snippet, style = MaterialTheme.typography.bodyMedium, modifier = Modifier.testTag("details_snippet"))
+            Spacer(modifier = Modifier.height(8.dp))
+            Text("Kategorija: ${newsItem!!.category ?: "Nepoznato"}", modifier = Modifier.testTag("details_category"))
+            Spacer(modifier = Modifier.height(8.dp))
+            Text("Izvor: ${newsItem!!.source ?: "Nepoznato"}", modifier = Modifier.testTag("details_source"))
+            Spacer(modifier = Modifier.height(8.dp))
+            Text("Datum: ${newsItem!!.publishedDate ?: "Nepoznat"}", modifier = Modifier.testTag("details_date"))
+
+            Spacer(modifier = Modifier.height(16.dp))
+
+            if (tags.isNotEmpty()) {
+                Text("Tagovi slike:", style = MaterialTheme.typography.titleMedium)
+                Spacer(modifier = Modifier.height(4.dp))
+                tags.forEach { tag ->
+                    Text("- $tag", style = MaterialTheme.typography.bodyMedium)
+                }
+                Spacer(modifier = Modifier.height(16.dp))
+            }
+
+            if (relatedNews.isNotEmpty()) {
+                Text("Povezane vijesti iz iste kategorije", style = MaterialTheme.typography.titleMedium)
+                Spacer(modifier = Modifier.height(8.dp))
+                relatedNews.forEachIndexed { index, relatedItem ->
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(vertical = 4.dp)
+                            .background(MaterialTheme.colorScheme.primary.copy(alpha = 0.1f))
+                            .clickable {
+                                navController.popBackStack()
+                                navController.navigate("/details/${relatedItem.uuid}")
+                            }
+                            .testTag("related_news_title_${index + 1}")
+                    ) {
+                        Text(
+                            text = relatedItem.title,
+                            style = MaterialTheme.typography.bodyMedium.copy(
+                                color = MaterialTheme.colorScheme.primary,
+                                fontWeight = FontWeight.Bold
+                            ),
+                            modifier = Modifier.padding(8.dp)
+                        )
+                    }
                 }
             }
 
@@ -95,3 +136,4 @@ fun NewsDetailsScreen(navController: NavController, newsId: String) {
         }
     }
 }
+

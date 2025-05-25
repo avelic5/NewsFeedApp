@@ -18,8 +18,16 @@ import androidx.compose.ui.unit.dp
 @Composable
 fun FilterChips(selectedCategory: String, onCategorySelected: (String) -> Unit) {
     FlowRow(modifier = Modifier.padding(8.dp)) {
-        val categories = listOf("All", "Politika", "Sport", "Nauka/tehnologija", "Muzika")
-        val lista = listOf("filter_chip_all", "filter_chip_pol", "filter_chip_spo", "filter_chip_sci", "filter_chip_none")
+        val categories = listOf(
+            "all", "general", "science", "sports", "business",
+            "health", "entertainment", "tech", "politics", "food", "travel"
+        )
+        val lista=listOf(
+            "filter_chip_all", "filter_chip_gen", "filter_chip_sci",
+            "filter_chip_spo", "filter_chip_biz", "filter_chip_hea",
+            "filter_chip_ent", "filter_chip_tec", "filter_chip_pol",
+            "filter_chip_foo", "filter_chip_trav"
+        )
 
         categories.forEachIndexed { index, category ->
             val isSelected = category == selectedCategory
@@ -36,7 +44,7 @@ fun FilterChips(selectedCategory: String, onCategorySelected: (String) -> Unit) 
                     .padding(4.dp)
                     .testTag(lista[index])
                     .semantics { selected = isSelected },
-                label = { Text(text = category) },
+                label = { Text(category.replaceFirstChar { it.uppercase() }) }
             )
         }
     }
