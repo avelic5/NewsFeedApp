@@ -1,25 +1,46 @@
 package etf.ri.rma.newsfeedapp.screen
+
 import FilterChips
-import FilterChips2
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.material3.AssistChip
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import java.text.SimpleDateFormat
+import java.util.*
+import androidx.compose.ui.platform.testTag
+import androidx.navigation.NavController
+import androidx.navigation.compose.rememberNavController
 import etf.ri.rma.newsfeedapp.data.NewsData
 import etf.ri.rma.newsfeedapp.model.NewsItem
-import etf.ri.rma.newsfeedapp.screen.NewsList
+import etf.ri.rma.newsfeedapp.data.network.NewsDAO
+import kotlinx.coroutines.launch
+
+import java.util.Locale
 
 @Composable
-fun NewsFeedScreen() {
-    var selectedCategory by remember { mutableStateOf("All") }
-    var sortOrder by remember { mutableStateOf("") }
-    val newsItems = NewsData.getAllNews()
+fun NewsFeedScreen(
+    navController: NavController,
+    filters: Triple<String, String, List<String>> = Triple("all", "Svi datumi", emptyList()),
+    newsItems: List<NewsItem> = emptyList(),
+    onCategorySelected: (String) -> Unit,
+    newsDAO: NewsDAO
+) {
+    val coroutineScope = rememberCoroutineScope()
+
+    var selectedCategory by remember { mutableStateOf(filters.first) }
+    val selectedDateRange = filters.second
+    val unwantedWords = filters.third
+
+    var newsItemsInternal by remember { mutableStateOf(newsItems) }
 
     Surface(
         modifier = Modifier.fillMaxSize(),
@@ -28,30 +49,71 @@ fun NewsFeedScreen() {
         Column(modifier = Modifier.fillMaxSize()) {
             FilterChips(
                 selectedCategory = selectedCategory,
-                onCategorySelected = { category -> selectedCategory = category }
-            )
-            FilterChips2(selectedCategory=sortOrder,
                 onCategorySelected = { category ->
-                    if(sortOrder==category)
-                        sortOrder=""
-                    else
-                        sortOrder = category
-                })
+                    selectedCategory = category
+                    onCategorySelected(category)
+
+                    coroutineScope.launch {
+                        newsItemsInternal = if (category == "all") {
+                            newsDAO.getAllStories()
+                        } else {
+                            newsDAO.getTopStoriesByCategory(category)
+                        }
+                    }
+                }
+            )
+
+            AssistChip(
+                onClick = { navController.navigate("/filters") },
+                modifier = Modifier.testTag("filter_chip_more"),
+                label = { Text("Više filtera ...") }
+            )
+
+            // Filteriranje po datumu i nepoželjnim riječima
+            val filteredNewsItems = newsItemsInternal.filter { newsItem ->
+                val categoryMatches = when (selectedCategory.lowercase()) {
+                    "all" -> true
+                    "Nauka/tehnologija" -> newsItem.category.equals("science", ignoreCase = true) ||
+                            newsItem.category.equals("tech", ignoreCase = true)
+                    "Politika" -> newsItem.category.equals("politics", ignoreCase = true)
+                    "Sport" -> newsItem.category.equals("sports", ignoreCase = true)
+                    else -> newsItem.category.equals(selectedCategory, ignoreCase = true)
+                }
+
+                categoryMatches &&
+                        isWithinDateRange(newsItem.publishedDate, selectedDateRange) &&
+                        unwantedWords.none { unwantedWord ->
+                            newsItem.title.contains(unwantedWord, ignoreCase = true) ||
+                                    (newsItem.snippet?.contains(unwantedWord, ignoreCase = true) == true)
+                        }
+            }
+
 
             NewsList(
-                newsItems = newsItems.filter {
-                    it.category == selectedCategory || selectedCategory == "All"
-                }.let { filteredNews ->
-                    when (sortOrder) {
-                        "Datum ⇩" -> filteredNews.sortedBy { it.publishedDate }
-                        "Datum ⇧" -> filteredNews.sortedByDescending { it.publishedDate }
-                        else -> filteredNews
-                    }
-                },
-                selectedCategory = selectedCategory
+                newsItems = filteredNewsItems,
+                selectedCategory = selectedCategory,
+                onNewsClick = { newsId -> navController.navigate("/details/$newsId") }
             )
         }
     }
 }
 
+fun isWithinDateRange(publishedDate: String, dateRange: String): Boolean {
+    if (dateRange.isEmpty() || dateRange == "Svi datumi") return true
 
+    // Formatter for the new date format
+    val formatter = SimpleDateFormat("dd-MM-yyyy", Locale.getDefault())
+
+    return try {
+        val (startDateString, endDateString) = dateRange.split(";")
+        val startDate = formatter.parse(startDateString.trim())
+        val endDate = formatter.parse(endDateString.trim())
+        val itemDate = formatter.parse(publishedDate.trim())
+
+        // Check if dates are valid and compare them
+        itemDate != null && startDate != null && endDate != null &&
+                !itemDate.before(startDate) && !itemDate.after(endDate)
+    } catch (e: Exception) {
+        false // Return false if parsing fails
+    }
+}
