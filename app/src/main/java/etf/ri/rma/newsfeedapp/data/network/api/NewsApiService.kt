@@ -18,14 +18,14 @@ data class NewsArticle(
 )
 
 interface TheNewsAPIService {
-    @GET("news/top")
+    @GET("news/top")//pravi zahtjeve prema tom endpointu, koji vraća najnovije vijesti.
     suspend fun getTopNews(
         @Query("api_token") apiToken: String,
         @Query("categories") category: String,
         @Query("locale") locale: String = "us",
         @Query("limit") limit: Int = 5
     ): NewsResponse
-    @GET("news/similar")
+    @GET("news/similar")// tačan endpoint iz TheNewsAPI dokumentacije, koji omogućava da dobiješ slične vijesti na osnovu UUID-a određene vijesti.
     suspend fun getSimilarNews(
         @Query("api_token") token: String,
         @Query("uuid") uuid: String

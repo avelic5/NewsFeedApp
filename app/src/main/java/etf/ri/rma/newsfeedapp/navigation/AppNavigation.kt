@@ -31,7 +31,7 @@ fun AppNavigation(navController: NavHostController) {
     // Create an instance of TheNewsAPIService using Retrofit
     val apiService = remember {
         Retrofit.Builder()
-            .baseUrl("https://api.thenewsapi.com/v1/") // Replace with your base URL
+            .baseUrl("https://api.thenewsapi.com/v1/")
             .addConverterFactory(GsonConverterFactory.create())
             .build()
             .create(TheNewsAPIService::class.java)
@@ -43,7 +43,7 @@ fun AppNavigation(navController: NavHostController) {
     // Create an instance of ImaggaAPIService using Retrofit
     val imaggaApiService = remember {
         Retrofit.Builder()
-            .baseUrl("https://api.imagga.com/v2/") // Replace with your base URL
+            .baseUrl("https://api.imagga.com/v2/")
             .addConverterFactory(GsonConverterFactory.create())
             .build()
             .create(ImagaAPIService::class.java)

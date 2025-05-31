@@ -12,7 +12,7 @@ data class Tag(val en: String)
 interface ImagaAPIService {
     @GET("v2/tags")
     suspend fun getImageTags(
-        @Header("Authorization") auth: String,
+        @Header("Authorization") auth: String,//kroz ovo se salje api key
         @Query("image_url") imageUrl: String
     ): ImagaTagResponse
 
