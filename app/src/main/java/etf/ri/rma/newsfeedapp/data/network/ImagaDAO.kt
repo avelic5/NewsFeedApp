@@ -1,33 +1,20 @@
-package etf.ri.rma.newsfeedapp.repository
+package etf.ri.rma.newsfeedapp.data.network
 
 import android.util.Base64
-
-import etf.ri.rma.newsfeedapp.exception.InvalidImageURLException
-import etf.ri.rma.newsfeedapp.network.ImaggaAPIService
+import etf.ri.rma.newsfeedapp.data.network.api.ImagaAPIService
+import etf.ri.rma.newsfeedapp.data.network.exception.InvalidImageURLException
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
-import retrofit2.Retrofit
-import retrofit2.converter.gson.GsonConverterFactory
 import java.net.URL
 
-object ImaggaDAO {
-    private const val apiKey = "acc_fafccabce025c33"
-    private const val apiSecret = "c218046d590352f6a7942c1ad264bb52"
-    private const val baseUrl = "https://api.imagga.com/v2/"
-
+class ImagaDAO(private val service: ImagaAPIService) {
     private val cache = mutableMapOf<String, List<String>>()
+    private val apiKey = "acc_fafccabce025c33"
+    private val apiSecret = "c218046d590352f6a7942c1ad264bb52"
 
     private val authHeader: String by lazy {
         val credentials = "$apiKey:$apiSecret"
         "Basic " + Base64.encodeToString(credentials.toByteArray(), Base64.NO_WRAP)
-    }
-
-    private val service: ImaggaAPIService by lazy {
-        Retrofit.Builder()
-            .baseUrl(baseUrl)
-            .addConverterFactory(GsonConverterFactory.create())
-            .build()
-            .create(ImaggaAPIService::class.java)
     }
 
     suspend fun getTags(imageURL: String): List<String> = withContext(Dispatchers.IO) {

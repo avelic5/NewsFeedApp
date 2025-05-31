@@ -5,12 +5,17 @@ import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import etf.ri.rma.newsfeedapp.model.NewsItem
-import etf.ri.rma.newsfeedapp.repository.NewsDAO
+import etf.ri.rma.newsfeedapp.data.network.NewsDAO
+import etf.ri.rma.newsfeedapp.data.network.ImagaDAO
+import etf.ri.rma.newsfeedapp.data.network.api.TheNewsAPIService
+import etf.ri.rma.newsfeedapp.data.network.api.ImagaAPIService
 import etf.ri.rma.newsfeedapp.screen.FilterScreen
 import etf.ri.rma.newsfeedapp.screen.NewsDetailsScreen
 import etf.ri.rma.newsfeedapp.screen.NewsFeedScreen
 import etf.ri.rma.newsfeedapp.screen.onApplyFilters
 import kotlinx.coroutines.launch
+import retrofit2.Retrofit
+import retrofit2.converter.gson.GsonConverterFactory
 
 @Composable
 fun AppNavigation(navController: NavHostController) {
@@ -23,8 +28,32 @@ fun AppNavigation(navController: NavHostController) {
     // Korutina za poziv `getAllStories`
     val coroutineScope = rememberCoroutineScope()
 
+    // Create an instance of TheNewsAPIService using Retrofit
+    val apiService = remember {
+        Retrofit.Builder()
+            .baseUrl("https://api.thenewsapi.com/v1/") // Replace with your base URL
+            .addConverterFactory(GsonConverterFactory.create())
+            .build()
+            .create(TheNewsAPIService::class.java)
+    }
+
+    // Create an instance of NewsDAO with the ApiService
+    val newsDAO = remember { NewsDAO(apiService) }
+
+    // Create an instance of ImaggaAPIService using Retrofit
+    val imaggaApiService = remember {
+        Retrofit.Builder()
+            .baseUrl("https://api.imagga.com/v2/") // Replace with your base URL
+            .addConverterFactory(GsonConverterFactory.create())
+            .build()
+            .create(ImagaAPIService::class.java)
+    }
+
+    // Create an instance of ImagaDAO with the ApiService
+    val imaggaDAO = remember { ImagaDAO(imaggaApiService) }
+
     LaunchedEffect(Unit) {
-        newsItemsState = NewsDAO.getAllStories()
+        newsItemsState = newsDAO.getAllStories()
     }
 
     NavHost(navController = navController, startDestination = "/home") {
@@ -36,9 +65,10 @@ fun AppNavigation(navController: NavHostController) {
                 onCategorySelected = { category ->
                     filters = filters.copy(first = category)
                     coroutineScope.launch {
-                        newsItemsState = NewsDAO.getTopStoriesByCategory(category)
+                        newsItemsState = newsDAO.getTopStoriesByCategory(category)
                     }
-                }
+                },
+                newsDAO = newsDAO
             )
         }
 
@@ -58,7 +88,7 @@ fun AppNavigation(navController: NavHostController) {
 
         composable("/details/{uuid}") { backStackEntry ->
             val newsId = backStackEntry.arguments?.getString("uuid") ?: return@composable
-            NewsDetailsScreen(navController = navController, newsId = newsId)
+            NewsDetailsScreen(navController = navController, newsId = newsId, newsDAO = newsDAO, imaggaDAO = imaggaDAO)
         }
     }
 }

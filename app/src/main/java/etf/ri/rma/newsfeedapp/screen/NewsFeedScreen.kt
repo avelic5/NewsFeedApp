@@ -21,18 +21,18 @@ import androidx.navigation.NavController
 import androidx.navigation.compose.rememberNavController
 import etf.ri.rma.newsfeedapp.data.NewsData
 import etf.ri.rma.newsfeedapp.model.NewsItem
-import etf.ri.rma.newsfeedapp.repository.NewsDAO
+import etf.ri.rma.newsfeedapp.data.network.NewsDAO
 import kotlinx.coroutines.launch
 
-
-
 import java.util.Locale
+
 @Composable
 fun NewsFeedScreen(
     navController: NavController,
     filters: Triple<String, String, List<String>> = Triple("all", "Svi datumi", emptyList()),
     newsItems: List<NewsItem> = emptyList(),
-    onCategorySelected: (String) -> Unit
+    onCategorySelected: (String) -> Unit,
+    newsDAO: NewsDAO
 ) {
     val coroutineScope = rememberCoroutineScope()
 
@@ -55,9 +55,9 @@ fun NewsFeedScreen(
 
                     coroutineScope.launch {
                         newsItemsInternal = if (category == "all") {
-                            NewsDAO.getAllStories()
+                            newsDAO.getAllStories()
                         } else {
-                            NewsDAO.getTopStoriesByCategory(category)
+                            newsDAO.getTopStoriesByCategory(category)
                         }
                     }
                 }

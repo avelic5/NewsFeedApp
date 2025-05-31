@@ -47,7 +47,9 @@ android {
 dependencies {
     // Compose BOM (kontroliše sve verzije)
     implementation(platform(libs.androidx.compose.bom))
-
+    implementation("com.squareup.okhttp3:okhttp:4.12.0")
+    implementation("com.squareup.okhttp3:okhttp-tls:4.12.0") // For TLS features like HeldCertificate
+    androidTestImplementation("com.squareup.okhttp3:mockwebserver:4.12.0")
     // Compose core libraries
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.lifecycle.runtime.ktx)

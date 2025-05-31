@@ -1,4 +1,4 @@
-package etf.ri.rma.newsfeedapp.network
+package etf.ri.rma.newsfeedapp.data.network.api
 
 import retrofit2.http.GET
 import retrofit2.http.Query
@@ -25,4 +25,10 @@ interface TheNewsAPIService {
         @Query("locale") locale: String = "us",
         @Query("limit") limit: Int = 5
     ): NewsResponse
+    @GET("news/similar")
+    suspend fun getSimilarNews(
+        @Query("api_token") token: String,
+        @Query("uuid") uuid: String
+    ): NewsResponse
+
 }

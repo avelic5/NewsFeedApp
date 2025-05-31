@@ -14,13 +14,11 @@ import androidx.navigation.NavController
 import coil.compose.AsyncImage
 import etf.ri.rma.newsfeedapp.R
 import etf.ri.rma.newsfeedapp.model.NewsItem
-import etf.ri.rma.newsfeedapp.repository.NewsDAO
-import etf.ri.rma.newsfeedapp.repository.ImaggaDAO
-import kotlinx.coroutines.launch
-import java.text.SimpleDateFormat
-import java.util.*
+import etf.ri.rma.newsfeedapp.data.network.NewsDAO
+import etf.ri.rma.newsfeedapp.data.network.ImagaDAO
+
 @Composable
-fun NewsDetailsScreen(navController: NavController, newsId: String) {
+fun NewsDetailsScreen(navController: NavController, newsId: String, newsDAO: NewsDAO, imaggaDAO: ImagaDAO) {
     val coroutineScope = rememberCoroutineScope()
 
     var newsItem by remember { mutableStateOf<NewsItem?>(null) }
@@ -28,28 +26,26 @@ fun NewsDetailsScreen(navController: NavController, newsId: String) {
     var tags by remember { mutableStateOf<List<String>>(emptyList()) }
 
     LaunchedEffect(newsId) {
-        val allNews = NewsDAO.getAllStories()
+        val allNews = newsDAO.getAllStories()
         val item = allNews.find { it.uuid == newsId }
         newsItem = item
 
-        item?.let {
-
-            if (it.imageTags.isNotEmpty()) {
-                tags = it.imageTags
-            } else if (!it.imageUrl.isNullOrBlank()) {
+        item?.let { currentItem ->
+            if (currentItem.imageTags.isNotEmpty()) {
+                tags = currentItem.imageTags
+            } else if (!currentItem.imageUrl.isNullOrBlank()) {
                 try {
-                    val newTags = ImaggaDAO.getTags(it.imageUrl!!)
+                    val newTags = imaggaDAO.getTags(currentItem.imageUrl!!)
                     tags = newTags
-                    it.imageTags.addAll(newTags) // sačuvaj u samom objektu
+                    currentItem.imageTags.addAll(newTags) // sačuvaj u samom objektu
                 } catch (e: Exception) {
                     tags = listOf("Greška pri dohvaćanju tagova")
                 }
             }
 
-
             if (relatedNews.isEmpty()) {
                 try {
-                    relatedNews = NewsDAO.getSimilarStories(it.uuid)
+                    relatedNews = newsDAO.getSimilarStories(currentItem.uuid)
                 } catch (e: Exception) {
                     relatedNews = emptyList()
                 }
@@ -70,11 +66,10 @@ fun NewsDetailsScreen(navController: NavController, newsId: String) {
             Text(newsItem!!.title, style = MaterialTheme.typography.titleLarge, modifier = Modifier.testTag("details_title"))
             Spacer(modifier = Modifier.height(8.dp))
 
-
             newsItem!!.imageUrl?.let { url ->
                 AsyncImage(
                     model = url,
-                    error=painterResource(id = R.drawable.vijesti),
+                    error = painterResource(id = R.drawable.vijesti),
                     contentDescription = "Slika vijesti",
                     modifier = Modifier
                         .fillMaxWidth()
@@ -131,9 +126,9 @@ fun NewsDetailsScreen(navController: NavController, newsId: String) {
 
             Spacer(modifier = Modifier.height(16.dp))
             Button(
-                onClick =  {
+                onClick = {
                     navController.navigate("/home?refresh=true")
-                 },
+                },
                 modifier = Modifier.testTag("details_close_button")
             ) {
                 Text("Zatvori detalje")
@@ -141,4 +136,3 @@ fun NewsDetailsScreen(navController: NavController, newsId: String) {
         }
     }
 }
-
