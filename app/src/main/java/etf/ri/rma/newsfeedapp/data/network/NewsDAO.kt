@@ -17,7 +17,7 @@ class NewsDAO(private val service: TheNewsAPIService) {
     private var initialLoaded = false
     private val initMutex = Mutex()
 
-    private val apiToken = "wGikBCnKzNcykeizwmW9Ihc4IALhG6uEt8QZSUVU"
+    private val apiToken ="oikaL3mNyi6tJQ9jHoHk2DE398cCUxH5vp9OEpAa"           //"wGikBCnKzNcykeizwmW9Ihc4IALhG6uEt8QZSUVU"
 
     suspend fun getAllStories(): List<NewsItem> {
         if (!initialLoaded) {
@@ -136,6 +136,8 @@ class NewsDAO(private val service: TheNewsAPIService) {
         return newsCache
     }
 
+
+
     suspend fun getSimilarStories(uuid: String): List<NewsItem> {
         if (!uuid.matches(Regex("[a-fA-F0-9\\-]{36}"))) {
             throw InvalidUUIDException("UUID nije u ispravnom formatu")
@@ -146,7 +148,7 @@ class NewsDAO(private val service: TheNewsAPIService) {
         }
 
         return try {
-            val response = service.getSimilarNews(apiToken, uuid)
+            val response = service.getSimilarNews(uuid,apiToken)
             val similar = response.data.map { article ->
                 NewsItem(
                     uuid = article.uuid,
@@ -159,12 +161,13 @@ class NewsDAO(private val service: TheNewsAPIService) {
                     publishedDate = article.published_at.substring(0, 10),
                     imageTags = arrayListOf()
                 )
-            }
+            }.take(2)
 
             similarNewsCache[uuid] = similar
             similar
         } catch (e: Exception) {
             println("Greška prilikom dohvaćanja sličnih vijesti: ${e.message}")
+
             emptyList()
         }
     }
@@ -194,24 +197,25 @@ class NewsDAO(private val service: TheNewsAPIService) {
     }*/ //primjer odgovora koji se očekuje od API-ja
 
     suspend fun getTopStoriesByCategory(category: String): List<NewsItem> {
+        val normalizedCategory = category.lowercase()
         val currentTime = System.currentTimeMillis()
-        val lastTime = lastFetchTime[category] ?: 0L
+        val lastTime = lastFetchTime[normalizedCategory] ?: 0L
 
-        val cached = newsCache.filter { it.category == category }
+        val cached = newsCache.filter { it.category?.lowercase() == normalizedCategory }
 
         if (currentTime - lastTime < 30_000) {
             return cached
         }
 
         return try {
-            val response = service.getTopNews(apiToken, category)
+            val response = service.getTopNews(apiToken, normalizedCategory)
             val newItems = response.data.take(3).map { article ->
                 NewsItem(
                     uuid = article.uuid,
                     title = article.title,
                     snippet = article.snippet,
                     imageUrl = article.image_url,
-                    category = article.categories.firstOrNull() ?: category,
+                    category = article.categories.firstOrNull()?.lowercase() ?: normalizedCategory,
                     isFeatured = true,
                     source = article.source,
                     publishedDate = article.published_at.substring(0, 10),
@@ -222,20 +226,19 @@ class NewsDAO(private val service: TheNewsAPIService) {
             newItems.forEach { item ->
                 val existing = newsCache.find { it.uuid == item.uuid }
                 if (existing == null) {
-                    newsCache.add(item.copy(category = "All"))
                     newsCache.add(item)
                 } else {
                     existing.isFeatured = true
                 }
             }
 
-            newsCache.filter { it.category == category && newItems.none { n -> n.uuid == it.uuid } }
+            newsCache.filter { it.category?.lowercase() == normalizedCategory && newItems.none { n -> n.uuid == it.uuid } }
                 .forEach { it.isFeatured = false }
 
-            lastFetchTime[category] = currentTime
+            lastFetchTime[normalizedCategory] = currentTime
 
             val oldNews = newsCache.filter {
-                it.category == category && newItems.none { n -> n.uuid == it.uuid }
+                it.category?.lowercase() == normalizedCategory && newItems.none { n -> n.uuid == it.uuid }
             }
 
             return newItems + oldNews
@@ -244,6 +247,7 @@ class NewsDAO(private val service: TheNewsAPIService) {
             return cached
         }
     }
+
 
 
 }

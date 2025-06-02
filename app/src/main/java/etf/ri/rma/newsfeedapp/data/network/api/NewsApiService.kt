@@ -1,6 +1,7 @@
 package etf.ri.rma.newsfeedapp.data.network.api
 
 import retrofit2.http.GET
+import retrofit2.http.Path
 import retrofit2.http.Query
 
 data class NewsResponse(
@@ -25,10 +26,12 @@ interface TheNewsAPIService {
         @Query("locale") locale: String = "us",
         @Query("limit") limit: Int = 5
     ): NewsResponse
-    @GET("news/similar")// tačan endpoint iz TheNewsAPI dokumentacije, koji omogućava da dobiješ slične vijesti na osnovu UUID-a određene vijesti.
+    // tačan endpoint iz TheNewsAPI dokumentacije, koji omogućava da dobiješ slične vijesti na osnovu UUID-a određene vijesti.
+    @GET("news/similar/{uuid}")
     suspend fun getSimilarNews(
-        @Query("api_token") token: String,
-        @Query("uuid") uuid: String
+        @Path("uuid") uuid: String,
+        @Query("api_token") token: String
     ): NewsResponse
+
 
 }

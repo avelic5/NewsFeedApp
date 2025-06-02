@@ -26,8 +26,12 @@ fun NewsList(
         )
         MessageCard("Nema pronađenih vijesti u kategoriji ${labels[selectedCategory.replaceFirstChar { it.uppercase() }]}")
     } else {
+        val featuredNews = newsItems.filter { it.isFeatured }.distinctBy { it.uuid }
+        val standardNews = newsItems.filter { !it.isFeatured }.distinctBy { it.uuid }
+        val allNews = featuredNews + standardNews
+
         LazyColumn(modifier = Modifier.fillMaxSize().testTag("news_list")) {
-            items(newsItems) { newsItem ->
+            items(allNews) { newsItem ->
                 if (newsItem.isFeatured) {
                     FeaturedNewsCard(
                         newsItem = newsItem,

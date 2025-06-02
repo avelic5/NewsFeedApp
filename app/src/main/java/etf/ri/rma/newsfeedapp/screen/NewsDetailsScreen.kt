@@ -16,7 +16,6 @@ import etf.ri.rma.newsfeedapp.R
 import etf.ri.rma.newsfeedapp.model.NewsItem
 import etf.ri.rma.newsfeedapp.data.network.NewsDAO
 import etf.ri.rma.newsfeedapp.data.network.ImagaDAO
-
 @Composable
 fun NewsDetailsScreen(navController: NavController, newsId: String, newsDAO: NewsDAO, imaggaDAO: ImagaDAO) {
     val coroutineScope = rememberCoroutineScope()
@@ -26,26 +25,45 @@ fun NewsDetailsScreen(navController: NavController, newsId: String, newsDAO: New
     var tags by remember { mutableStateOf<List<String>>(emptyList()) }
 
     LaunchedEffect(newsId) {
-        val allNews = newsDAO.getAllStories()
+        val allNews = newsDAO.getAllStories().toMutableList()
         val item = allNews.find { it.uuid == newsId }
         newsItem = item
 
         item?.let { currentItem ->
+            // Tagovi slike
             if (currentItem.imageTags.isNotEmpty()) {
                 tags = currentItem.imageTags
             } else if (!currentItem.imageUrl.isNullOrBlank()) {
                 try {
                     val newTags = imaggaDAO.getTags(currentItem.imageUrl!!)
                     tags = newTags
-                    currentItem.imageTags.addAll(newTags) // sačuvaj u samom objektu
+                    currentItem.imageTags.addAll(newTags)
                 } catch (e: Exception) {
                     tags = listOf("Greška pri dohvaćanju tagova")
                 }
             }
 
+            // Slične vijesti
             if (relatedNews.isEmpty()) {
                 try {
-                    relatedNews = newsDAO.getSimilarStories(currentItem.uuid)
+                    val similar = newsDAO.getSimilarStories(currentItem.uuid)
+                    relatedNews = similar
+
+                    // Dodavanje u cache (ručno jer je newsCache private)
+                    val newOnes = similar.filterNot { sim ->
+                        allNews.any { existing -> existing.uuid == sim.uuid }
+                    }.map {
+                        it.copy(category = "All", isFeatured = false)
+                    }
+
+                    if (newOnes.isNotEmpty()) {
+                        // Pristup private varijabli putem refleksije
+                        val field = NewsDAO::class.java.getDeclaredField("newsCache")
+                        field.isAccessible = true
+                        val cache = field.get(newsDAO) as MutableList<NewsItem>
+                        cache.addAll(newOnes)
+                    }
+
                 } catch (e: Exception) {
                     relatedNews = emptyList()
                 }
@@ -98,7 +116,7 @@ fun NewsDetailsScreen(navController: NavController, newsId: String, newsDAO: New
             }
 
             if (relatedNews.isNotEmpty()) {
-                Text("Povezane vijesti iz iste kategorije", style = MaterialTheme.typography.titleMedium)
+                Text("Slične vijesti", style = MaterialTheme.typography.titleMedium)
                 Spacer(modifier = Modifier.height(8.dp))
                 relatedNews.forEachIndexed { index, relatedItem ->
                     Box(

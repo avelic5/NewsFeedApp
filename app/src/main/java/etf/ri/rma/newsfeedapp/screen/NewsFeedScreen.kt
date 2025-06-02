@@ -8,6 +8,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -25,7 +26,6 @@ import etf.ri.rma.newsfeedapp.data.network.NewsDAO
 import kotlinx.coroutines.launch
 
 import java.util.Locale
-
 @Composable
 fun NewsFeedScreen(
     navController: NavController,
@@ -42,6 +42,12 @@ fun NewsFeedScreen(
 
     var newsItemsInternal by remember { mutableStateOf(newsItems) }
 
+    LaunchedEffect(Unit) {
+        if (newsItemsInternal.isEmpty()) {
+            newsItemsInternal = newsDAO.getAllStories()
+        }
+    }
+
     Surface(
         modifier = Modifier.fillMaxSize(),
         color = MaterialTheme.colorScheme.background
@@ -54,7 +60,7 @@ fun NewsFeedScreen(
                     onCategorySelected(category)
 
                     coroutineScope.launch {
-                        newsItemsInternal = if (category == "all") {
+                        newsItemsInternal = if (category.lowercase() == "all") {
                             newsDAO.getAllStories()
                         } else {
                             newsDAO.getTopStoriesByCategory(category)
@@ -69,28 +75,27 @@ fun NewsFeedScreen(
                 label = { Text("Više filtera ...") }
             )
 
-            // Filteriranje po datumu i nepoželjnim riječima
             val filteredNewsItems = newsItemsInternal.filter { newsItem ->
                 val categoryMatches = when (selectedCategory.lowercase()) {
                     "all" -> true
-                    "Nauka/tehnologija" -> newsItem.category.equals("science", ignoreCase = true) ||
-                            newsItem.category.equals("tech", ignoreCase = true)
-                    "Politika" -> newsItem.category.equals("politics", ignoreCase = true)
-                    "Sport" -> newsItem.category.equals("sports", ignoreCase = true)
-                    else -> newsItem.category.equals(selectedCategory, ignoreCase = true)
+                    "science", "tech" -> newsItem.category.equals("science", true)
+                            || newsItem.category.equals("tech", true)
+                    else -> newsItem.category.equals(selectedCategory, true)
                 }
 
                 categoryMatches &&
                         isWithinDateRange(newsItem.publishedDate, selectedDateRange) &&
-                        unwantedWords.none { unwantedWord ->
-                            newsItem.title.contains(unwantedWord, ignoreCase = true) ||
-                                    (newsItem.snippet?.contains(unwantedWord, ignoreCase = true) == true)
+                        unwantedWords.none { word ->
+                            newsItem.title.contains(word, true) ||
+                                    (newsItem.snippet?.contains(word, true) == true)
                         }
             }
 
+            val uniqueFilteredNews = filteredNewsItems.distinctBy { it.uuid }
+            val sortedNews = uniqueFilteredNews.sortedByDescending { it.isFeatured }
 
             NewsList(
-                newsItems = filteredNewsItems,
+                newsItems = sortedNews,
                 selectedCategory = selectedCategory,
                 onNewsClick = { newsId -> navController.navigate("/details/$newsId") }
             )
@@ -98,22 +103,20 @@ fun NewsFeedScreen(
     }
 }
 
+
 fun isWithinDateRange(publishedDate: String, dateRange: String): Boolean {
     if (dateRange.isEmpty() || dateRange == "Svi datumi") return true
 
-    // Formatter for the new date format
     val formatter = SimpleDateFormat("dd-MM-yyyy", Locale.getDefault())
-
     return try {
         val (startDateString, endDateString) = dateRange.split(";")
         val startDate = formatter.parse(startDateString.trim())
         val endDate = formatter.parse(endDateString.trim())
         val itemDate = formatter.parse(publishedDate.trim())
-
-        // Check if dates are valid and compare them
         itemDate != null && startDate != null && endDate != null &&
                 !itemDate.before(startDate) && !itemDate.after(endDate)
     } catch (e: Exception) {
-        false // Return false if parsing fails
+        false
     }
 }
+

@@ -4,6 +4,7 @@ import androidx.compose.runtime.*
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
+import androidx.navigation.compose.currentBackStackEntryAsState
 import etf.ri.rma.newsfeedapp.model.NewsItem
 import etf.ri.rma.newsfeedapp.data.network.NewsDAO
 import etf.ri.rma.newsfeedapp.data.network.ImagaDAO
@@ -16,19 +17,13 @@ import etf.ri.rma.newsfeedapp.screen.onApplyFilters
 import kotlinx.coroutines.launch
 import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
-
 @Composable
 fun AppNavigation(navController: NavHostController) {
-    // Filteri: kategorija, datum, nepoželjne riječi
     var filters by remember { mutableStateOf(Triple("all", "", emptyList<String>())) }
-
-    // Stanje vijesti
     var newsItemsState by remember { mutableStateOf<List<NewsItem>>(emptyList()) }
 
-    // Korutina za poziv `getAllStories`
     val coroutineScope = rememberCoroutineScope()
 
-    // Create an instance of TheNewsAPIService using Retrofit
     val apiService = remember {
         Retrofit.Builder()
             .baseUrl("https://api.thenewsapi.com/v1/")
@@ -37,22 +32,23 @@ fun AppNavigation(navController: NavHostController) {
             .create(TheNewsAPIService::class.java)
     }
 
-    // Create an instance of NewsDAO with the ApiService
     val newsDAO = remember { NewsDAO(apiService) }
 
-    // Create an instance of ImaggaAPIService using Retrofit
     val imaggaApiService = remember {
         Retrofit.Builder()
-            .baseUrl("https://api.imagga.com/v2/")
+            .baseUrl("https://api.imagga.com/")
             .addConverterFactory(GsonConverterFactory.create())
             .build()
             .create(ImagaAPIService::class.java)
     }
 
-    // Create an instance of ImagaDAO with the ApiService
     val imaggaDAO = remember { ImagaDAO(imaggaApiService) }
 
-    LaunchedEffect(Unit) {
+    // osvježavanje kad se vrati sa detalja
+    val currentBackStack = navController.currentBackStackEntryAsState().value
+    val refresh = currentBackStack?.arguments?.getString("refresh") == "true"
+
+    LaunchedEffect(refresh) {
         newsItemsState = newsDAO.getAllStories()
     }
 
@@ -88,7 +84,12 @@ fun AppNavigation(navController: NavHostController) {
 
         composable("/details/{uuid}") { backStackEntry ->
             val newsId = backStackEntry.arguments?.getString("uuid") ?: return@composable
-            NewsDetailsScreen(navController = navController, newsId = newsId, newsDAO = newsDAO, imaggaDAO = imaggaDAO)
+            NewsDetailsScreen(
+                navController = navController,
+                newsId = newsId,
+                newsDAO = newsDAO,
+                imaggaDAO = imaggaDAO
+            )
         }
     }
 }
