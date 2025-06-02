@@ -22,7 +22,7 @@ fun FilterChips(selectedCategory: String, onCategorySelected: (String) -> Unit) 
             "politics" to "filter_chip_pol",
             "sports" to "filter_chip_spo",
             "science" to "filter_chip_sci",
-            "tech" to "filter_chip_sci",
+            "tech" to "filter_chip_tech",
             "music" to "filter_chip_none"
         )
 
