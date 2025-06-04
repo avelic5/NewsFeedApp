@@ -52,9 +52,8 @@ fun NewsDetailsScreen(navController: NavController, newsId: String, newsDAO: New
                     // Dodavanje u cache (ručno jer je newsCache private)
                     val newOnes = similar.filterNot { sim ->
                         allNews.any { existing -> existing.uuid == sim.uuid }
-                    }.map {
-                        it.copy(category = "All", isFeatured = false)
                     }
+
 
                     if (newOnes.isNotEmpty()) {
                         // Pristup private varijabli putem refleksije

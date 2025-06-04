@@ -15,6 +15,10 @@ import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
 import java.text.SimpleDateFormat
 import java.util.*
+
+import kotlinx.coroutines.launch
+
+
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class)
 @Composable
 fun FilterScreen(
@@ -22,8 +26,10 @@ fun FilterScreen(
     selectedCategory: String,
     dateRange: String,
     unwantedWords: List<String>,
-    onApplyFilters: (String, String, List<String>) -> Unit
+    onApplyFilters: (String, String, List<String>) -> Unit,
+    onCategoryChanged: suspend (String) -> Unit
 ) {
+    val coroutineScope = rememberCoroutineScope()
     var currentCategory by remember { mutableStateOf(selectedCategory) }
     var currentDateRange by remember { mutableStateOf(if (dateRange.isEmpty()) "Svi datumi" else dateRange) }
     var currentUnwantedWords by remember { mutableStateOf(unwantedWords) }
@@ -36,14 +42,13 @@ fun FilterScreen(
     ) {
         Column(modifier = Modifier.padding(16.dp)) {
 
-            // Kategorije
             Text(
                 "KATEGORIJE:",
                 style = MaterialTheme.typography.titleMedium,
                 modifier = Modifier.padding(bottom = 8.dp)
             )
 
-            val categories = listOf("all", "politics", "sports", "science", "music","tech")
+            val categories = listOf("all", "politics", "sports", "science", "music", "tech")
             val labels = mapOf(
                 "all" to "All",
                 "politics" to "Politika",
@@ -63,9 +68,14 @@ fun FilterScreen(
 
             FlowRow(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 categories.forEach { category ->
-                    if(category!="tech") {
+                    if (category != "tech") {
                         AssistChip(
-                            onClick = { currentCategory = category },
+                            onClick = {
+                                currentCategory = category
+                                coroutineScope.launch {
+                                    onCategoryChanged(category)
+                                }
+                            },
                             label = { Text(labels[category] ?: category) },
                             modifier = Modifier
                                 .testTag(testTags[category] ?: "")
@@ -81,7 +91,6 @@ fun FilterScreen(
 
             Spacer(modifier = Modifier.height(16.dp))
 
-            // Izbor datuma
             Text(
                 "Izaberite opseg datuma:",
                 style = MaterialTheme.typography.titleMedium,
@@ -129,7 +138,6 @@ fun FilterScreen(
 
             Spacer(modifier = Modifier.height(16.dp))
 
-            // Nepoželjne riječi
             Text(
                 "Nepoželjne riječi:",
                 style = MaterialTheme.typography.titleMedium,
@@ -171,7 +179,6 @@ fun FilterScreen(
 
             Spacer(modifier = Modifier.height(16.dp))
 
-            // Dugme za primjenu filtera
             Button(
                 onClick = {
                     onApplyFilters(currentCategory, currentDateRange, currentUnwantedWords)

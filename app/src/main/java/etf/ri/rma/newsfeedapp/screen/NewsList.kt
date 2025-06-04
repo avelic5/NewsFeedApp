@@ -3,7 +3,6 @@ package etf.ri.rma.newsfeedapp.screen
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.testTag
@@ -17,14 +16,14 @@ fun NewsList(
 ) {
     if (newsItems.isEmpty()) {
         val labels = mapOf(
-            "All" to "All",
-            "Politics" to "Politika",
-            "Sports" to "Sport",
-            "Science" to "Nauka/tehnologija",
-            "Tech" to "Nauka/tehnologija",
-            "Music" to "Muzika"
+            "all" to "Sve",
+            "politics" to "Politika",
+            "sports" to "Sport",
+            "science" to "Nauka/tehnologija",
+            "tech" to "Nauka/tehnologija",
+            "music" to "Muzika"
         )
-        MessageCard("Nema pronađenih vijesti u kategoriji ${labels[selectedCategory.replaceFirstChar { it.uppercase() }]}")
+        MessageCard("Nema pronađenih vijesti u kategoriji ${labels[selectedCategory.lowercase()]}")
     } else {
         val featuredNews = newsItems.filter { it.isFeatured }.distinctBy { it.uuid }
         val standardNews = newsItems.filter { !it.isFeatured }.distinctBy { it.uuid }

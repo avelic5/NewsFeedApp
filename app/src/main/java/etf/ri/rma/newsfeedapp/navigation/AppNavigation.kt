@@ -78,9 +78,18 @@ fun AppNavigation(navController: NavHostController) {
                     val filteredList = onApplyFilters(category, dateRange, unwantedWords, newsItemsState)
                     filters = Triple(category, dateRange, unwantedWords)
                     newsItemsState = filteredList
+                },
+                onCategoryChanged = { category ->
+                    val updatedNews = if (category.lowercase() == "all") {
+                        newsDAO.getAllStories()
+                    } else {
+                        newsDAO.getTopStoriesByCategory(category)
+                    }
+                    newsItemsState = updatedNews
                 }
             )
         }
+
 
         composable("/details/{uuid}") { backStackEntry ->
             val newsId = backStackEntry.arguments?.getString("uuid") ?: return@composable

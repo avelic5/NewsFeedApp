@@ -3,29 +3,17 @@ package etf.ri.rma.newsfeedapp.screen
 import FilterChips
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.material3.AssistChip
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Surface
-import androidx.compose.material3.Text
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
-import androidx.compose.runtime.setValue
+import androidx.compose.material3.*
+import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
-import java.text.SimpleDateFormat
-import java.util.*
 import androidx.compose.ui.platform.testTag
 import androidx.navigation.NavController
-import androidx.navigation.compose.rememberNavController
-import etf.ri.rma.newsfeedapp.data.NewsData
-import etf.ri.rma.newsfeedapp.model.NewsItem
 import etf.ri.rma.newsfeedapp.data.network.NewsDAO
+import etf.ri.rma.newsfeedapp.model.NewsItem
 import kotlinx.coroutines.launch
+import java.text.SimpleDateFormat
+import java.util.*
 
-import java.util.Locale
 @Composable
 fun NewsFeedScreen(
     navController: NavController,
@@ -76,18 +64,14 @@ fun NewsFeedScreen(
             )
 
             val filteredNewsItems = newsItemsInternal.filter { newsItem ->
-                val categoryMatches = when (selectedCategory.lowercase()) {
-                    "all" -> true
-                    "science", "tech" -> newsItem.category.equals("science", true)
-                            || newsItem.category.equals("tech", true)
-                    else -> newsItem.category.equals(selectedCategory, true)
-                }
+                val categoryMatches = selectedCategory == "all" ||
+                        newsItem.category?.lowercase() == selectedCategory.lowercase()
 
                 categoryMatches &&
                         isWithinDateRange(newsItem.publishedDate, selectedDateRange) &&
                         unwantedWords.none { word ->
-                            newsItem.title.contains(word, true) ||
-                                    (newsItem.snippet?.contains(word, true) == true)
+                            newsItem.title.contains(word, ignoreCase = true) ||
+                                    (newsItem.snippet?.contains(word, ignoreCase = true) == true)
                         }
             }
 
@@ -102,7 +86,6 @@ fun NewsFeedScreen(
         }
     }
 }
-
 
 fun isWithinDateRange(publishedDate: String, dateRange: String): Boolean {
     if (dateRange.isEmpty() || dateRange == "Svi datumi") return true
