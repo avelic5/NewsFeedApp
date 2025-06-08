@@ -1,5 +1,6 @@
 package etf.ri.rma.newsfeedapp.screen
 
+import android.content.Context
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
@@ -13,11 +14,13 @@ import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import coil.compose.AsyncImage
 import etf.ri.rma.newsfeedapp.R
+import etf.ri.rma.newsfeedapp.data.SavedNewsDAO
+import etf.ri.rma.newsfeedapp.data.hasInternetConnection
 import etf.ri.rma.newsfeedapp.model.NewsItem
 import etf.ri.rma.newsfeedapp.data.network.NewsDAO
 import etf.ri.rma.newsfeedapp.data.network.ImagaDAO
 @Composable
-fun NewsDetailsScreen(navController: NavController, newsId: String, newsDAO: NewsDAO, imaggaDAO: ImagaDAO) {
+fun NewsDetailsScreen(navController: NavController, newsId: String, newsDAO: NewsDAO, imaggaDAO: ImagaDAO, savedNewsDAO: SavedNewsDAO, context: Context) {
     val coroutineScope = rememberCoroutineScope()
 
     var newsItem by remember { mutableStateOf<NewsItem?>(null) }
@@ -30,41 +33,28 @@ fun NewsDetailsScreen(navController: NavController, newsId: String, newsDAO: New
         newsItem = item
 
         item?.let { currentItem ->
-            // Tagovi slike
-            if (currentItem.imageTags.isNotEmpty()) {
-                tags = currentItem.imageTags
-            } else if (!currentItem.imageUrl.isNullOrBlank()) {
-                try {
-                    val newTags = imaggaDAO.getTags(currentItem.imageUrl!!)
-                    tags = newTags
-                    currentItem.imageTags.addAll(newTags)
-                } catch (e: Exception) {
-                    tags = listOf("Greška pri dohvaćanju tagova")
+            val saved = savedNewsDAO.saveNews(currentItem)
+            val savedEntity = savedNewsDAO.getNewsByUUID(currentItem.uuid)
+            val savedId = savedEntity?.id?.toInt()
+
+            if (savedId != null) {
+                val localTags = savedNewsDAO.getTags(savedId)
+                if (localTags.isNotEmpty()) {
+                    tags = localTags
+                } else if (!currentItem.imageUrl.isNullOrBlank()) {
+                    try {
+                        val newTags = imaggaDAO.getTags(currentItem.imageUrl!!)
+                        tags = newTags
+                        savedNewsDAO.addTags(newTags, savedId)
+                    } catch (e: Exception) {
+                        tags = listOf("Greška pri dohvaćanju tagova")
+                    }
                 }
-            }
 
-            // Slične vijesti
-            if (relatedNews.isEmpty()) {
-                try {
-                    val similar = newsDAO.getSimilarStories(currentItem.uuid)
-                    relatedNews = similar
-
-                    // Dodavanje u cache (ručno jer je newsCache private)
-                    val newOnes = similar.filterNot { sim ->
-                        allNews.any { existing -> existing.uuid == sim.uuid }
-                    }
-
-
-                    if (newOnes.isNotEmpty()) {
-                        // Pristup private varijabli putem refleksije
-                        val field = NewsDAO::class.java.getDeclaredField("newsCache")
-                        field.isAccessible = true
-                        val cache = field.get(newsDAO) as MutableList<NewsItem>
-                        cache.addAll(newOnes)
-                    }
-
-                } catch (e: Exception) {
-                    relatedNews = emptyList()
+                relatedNews = if (!hasInternetConnection(context)) {
+                    savedNewsDAO.getSimilarNews(tags.take(2))
+                } else {
+                    newsDAO.getSimilarStories(currentItem.uuid)
                 }
             }
         }
@@ -153,3 +143,4 @@ fun NewsDetailsScreen(navController: NavController, newsId: String, newsDAO: New
         }
     }
 }
+

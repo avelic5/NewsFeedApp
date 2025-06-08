@@ -5,6 +5,8 @@ import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
+import etf.ri.rma.newsfeedapp.data.SavedNewsDAO
+import etf.ri.rma.newsfeedapp.data.hasInternetConnection
 import etf.ri.rma.newsfeedapp.model.NewsItem
 import etf.ri.rma.newsfeedapp.data.network.NewsDAO
 import etf.ri.rma.newsfeedapp.data.network.ImagaDAO
@@ -17,8 +19,13 @@ import etf.ri.rma.newsfeedapp.screen.onApplyFilters
 import kotlinx.coroutines.launch
 import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
+
+
+import android.content.Context
+
+
 @Composable
-fun AppNavigation(navController: NavHostController) {
+fun AppNavigation(navController: NavHostController, context: Context, savedNewsDAO: SavedNewsDAO) {
     var filters by remember { mutableStateOf(Triple("all", "", emptyList<String>())) }
     var newsItemsState by remember { mutableStateOf<List<NewsItem>>(emptyList()) }
 
@@ -44,12 +51,17 @@ fun AppNavigation(navController: NavHostController) {
 
     val imaggaDAO = remember { ImagaDAO(imaggaApiService) }
 
-    // osvježavanje kad se vrati sa detalja
     val currentBackStack = navController.currentBackStackEntryAsState().value
     val refresh = currentBackStack?.arguments?.getString("refresh") == "true"
 
     LaunchedEffect(refresh) {
-        newsItemsState = newsDAO.getAllStories()
+        newsItemsState = if (!hasInternetConnection(context)) {
+            savedNewsDAO.allNews()
+        } else {
+            val freshNews = newsDAO.getAllStories()
+            freshNews.forEach { savedNewsDAO.saveNews(it) }
+            freshNews
+        }
     }
 
     NavHost(navController = navController, startDestination = "/home") {
@@ -61,7 +73,13 @@ fun AppNavigation(navController: NavHostController) {
                 onCategorySelected = { category ->
                     filters = filters.copy(first = category)
                     coroutineScope.launch {
-                        newsItemsState = newsDAO.getTopStoriesByCategory(category)
+                        newsItemsState = if (!hasInternetConnection(context)) {
+                            savedNewsDAO.getNewsWithCategory(category)
+                        } else {
+                            val topNews = newsDAO.getTopStoriesByCategory(category)
+                            topNews.forEach { savedNewsDAO.saveNews(it) }
+                            topNews
+                        }
                     }
                 },
                 newsDAO = newsDAO
@@ -80,16 +98,19 @@ fun AppNavigation(navController: NavHostController) {
                     newsItemsState = filteredList
                 },
                 onCategoryChanged = { category ->
-                    val updatedNews = if (category.lowercase() == "all") {
-                        newsDAO.getAllStories()
-                    } else {
-                        newsDAO.getTopStoriesByCategory(category)
+                    coroutineScope.launch {
+                        val updatedNews = if (!hasInternetConnection(context)) {
+                            savedNewsDAO.getNewsWithCategory(category)
+                        } else {
+                            val topNews = newsDAO.getTopStoriesByCategory(category)
+                            topNews.forEach { savedNewsDAO.saveNews(it) }
+                            topNews
+                        }
+                        newsItemsState = updatedNews
                     }
-                    newsItemsState = updatedNews
                 }
             )
         }
-
 
         composable("/details/{uuid}") { backStackEntry ->
             val newsId = backStackEntry.arguments?.getString("uuid") ?: return@composable
@@ -97,8 +118,11 @@ fun AppNavigation(navController: NavHostController) {
                 navController = navController,
                 newsId = newsId,
                 newsDAO = newsDAO,
-                imaggaDAO = imaggaDAO
+                imaggaDAO = imaggaDAO,
+                savedNewsDAO = savedNewsDAO,
+                context = context
             )
         }
     }
 }
+
