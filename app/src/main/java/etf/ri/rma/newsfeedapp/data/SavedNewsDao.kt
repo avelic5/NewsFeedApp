@@ -19,10 +19,10 @@ interface SavedNewsDAO {
         val existing = getNewsByUUID(news.uuid)
         if (existing != null) return false
         val newsId = insertNews(news.toEntity())
-        return newsId > 0
+        return newsId > 0//broj unesenih redova
     }
 
-    @Insert(onConflict = OnConflictStrategy.IGNORE)
+    @Insert(onConflict = OnConflictStrategy.IGNORE)//isti pk, ali to se nece desiti
     suspend fun insertNews(news: NewsEntity): Long
 
     @Insert(onConflict = OnConflictStrategy.IGNORE)
@@ -33,14 +33,14 @@ interface SavedNewsDAO {
 
     @Transaction
     @Query("SELECT * FROM news")
-    suspend fun getAllNewsWithTags(): List<NewsWithTags>
+    suspend fun getAllNewsWithTags(): List<NewsWithTags>//moja modelska klasa
 
     @Transaction
     suspend fun allNews(): List<NewsItem> {
         return getAllNewsWithTags().map { it.toNewsItem() }
     }
 
-    @Transaction
+    @Transaction //vraca modelsku klasu NewsWithTags koju moram mapirati u NewsItem u sljedecoj
     @Query("SELECT * FROM news WHERE category = :category")
     suspend fun getNewsByCategoryRaw(category: String): List<NewsWithTags>
 
@@ -51,9 +51,9 @@ interface SavedNewsDAO {
 
     @Query("SELECT * FROM news WHERE uuid = :uuid")
     suspend fun getNewsByUUID(uuid: String): NewsEntity?
-
+                                        //dvotacka je da se mapira sa parametrom
     @Query("SELECT * FROM tags WHERE value = :value")
-    suspend fun getTagByValue(value: String): TagEntity?
+    suspend fun getTagByValue(value: String): TagEntity?//uzima samo prvi
 
     @Transaction
     suspend fun addTags(tags: List<String>, newsId: Int): Int {
@@ -61,7 +61,7 @@ interface SavedNewsDAO {
         for (tag in tags) {
             val existingTag = getTagByValue(tag)
             val tagId = if (existingTag != null) {
-                existingTag.tagId
+                existingTag.id
             } else {
                 val newId = insertTag(TagEntity(value = tag))
                 if (newId > 0) added++
@@ -78,7 +78,7 @@ interface SavedNewsDAO {
 
     suspend fun getTags(newsId: Int): List<String> {
         return getNewsWithTagsById(newsId).tags.map { it.value }
-    }
+    }//map vraca novu listu tako da uzme value od svakog taga
 
     @Transaction
     @Query("SELECT * FROM news")

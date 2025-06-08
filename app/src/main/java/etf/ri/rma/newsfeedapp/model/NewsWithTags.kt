@@ -12,7 +12,7 @@ data class NewsWithTags(
         associateBy = Junction(
             value = NewsTagCrossRef::class,
             parentColumn = "newsId",
-            entityColumn = "tagId"
+            entityColumn = "tagsId"
         )
     )
     val tags: List<TagEntity>
