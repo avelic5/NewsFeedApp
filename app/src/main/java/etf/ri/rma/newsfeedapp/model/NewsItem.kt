@@ -10,5 +10,5 @@ data class NewsItem(
     var isFeatured: Boolean, // Da li je vijest istaknuta ili ne (Featured ili Non-featured)
     val source: String?,      // Izvor vijesti (npr. "BBC", "CNN")
     val publishedDate: String, // Datum objavljivanja vijesti
-    val imageTags: ArrayList<String> = arrayListOf()
+    val imageTags: ArrayList<TagEntity> = arrayListOf()
 )

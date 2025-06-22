@@ -1,6 +1,7 @@
 package etf.ri.rma.newsfeedapp.screen
 
 import android.content.Context
+import android.util.Log
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
@@ -19,6 +20,8 @@ import etf.ri.rma.newsfeedapp.data.hasInternetConnection
 import etf.ri.rma.newsfeedapp.model.NewsItem
 import etf.ri.rma.newsfeedapp.data.network.NewsDAO
 import etf.ri.rma.newsfeedapp.data.network.ImagaDAO
+import etf.ri.rma.newsfeedapp.model.TagEntity
+
 @Composable
 fun NewsDetailsScreen(navController: NavController, newsId: String, newsDAO: NewsDAO, imaggaDAO: ImagaDAO, savedNewsDAO: SavedNewsDAO, context: Context) {
     val coroutineScope = rememberCoroutineScope()
@@ -26,6 +29,7 @@ fun NewsDetailsScreen(navController: NavController, newsId: String, newsDAO: New
     var newsItem by remember { mutableStateOf<NewsItem?>(null) }
     var relatedNews by remember { mutableStateOf<List<NewsItem>>(emptyList()) }
     var tags by remember { mutableStateOf<List<String>>(emptyList()) }
+
 
     LaunchedEffect(newsId) {
         val allNews = newsDAO.getAllStories().toMutableList()
@@ -38,7 +42,7 @@ fun NewsDetailsScreen(navController: NavController, newsId: String, newsDAO: New
             val savedId = savedEntity?.id?.toInt()
 
             if (savedId != null) {
-                val localTags = savedNewsDAO.getTags(savedId)
+                val localTags = savedNewsDAO.getTags(savedId) // ovo vraća List<String>
                 if (localTags.isNotEmpty()) {
                     tags = localTags
                 } else if (!currentItem.imageUrl.isNullOrBlank()) {
@@ -47,6 +51,7 @@ fun NewsDetailsScreen(navController: NavController, newsId: String, newsDAO: New
                         tags = newTags
                         savedNewsDAO.addTags(newTags, savedId)
                     } catch (e: Exception) {
+                        Log.e("TAG_FETCH", "Greška pri dohvaćanju tagova", e)
                         tags = listOf("Greška pri dohvaćanju tagova")
                     }
                 }

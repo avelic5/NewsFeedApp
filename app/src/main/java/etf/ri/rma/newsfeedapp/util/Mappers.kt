@@ -21,11 +21,12 @@ fun NewsWithTags.toNewsItem(): NewsItem {
         uuid = news.uuid,
         title = news.title,
         snippet = news.snippet,
-        imageUrl = news.imageUrl,
+        imageUrl = news.imageUrl, // <-- PROVJERI OVO!
         category = news.category,
         isFeatured = news.isFeatured,
         source = news.source,
         publishedDate = news.publishedDate,
-        imageTags = ArrayList(tags.map { it.value })
+        imageTags = ArrayList(tags) // tags su TagEntity
     )
 }
+
