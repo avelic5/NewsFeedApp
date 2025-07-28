@@ -13,29 +13,29 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 
 private val DarkColorScheme = darkColorScheme(
-    primary = Color(0xFFBB86FC),
+    primary = Color(0xFF8C9EFF),       // blaga svetloplava (indigo accent)
     onPrimary = Color.Black,
-    background = Color(0xFF121212),
-    onBackground = Color.White,
-    surface = Color(0xFF1E1E1E),
-    onSurface = Color.White
+    background = Color(0xFF121212),    // klasična tamna pozadina
+    onBackground = Color(0xFFE0E0E0),  // svijetlo-siva za tekst na tamnoj pozadini
+    surface = Color(0xFF1E1E2F),       // tamnija površina sa malo ljubičastog tona
+    onSurface = Color(0xFFE0E0E0)      // svijetla boja teksta na površini
 )
+
 
 private val LightColorScheme = lightColorScheme(
-    primary = Purple40,
-    secondary = PurpleGrey40,
-    tertiary = Pink40
+    primary = Color(0xFF2196F3),          // plava - možeš mijenjati po želji
+    secondary = Color(0xFF64B5F6),        // svijetlija plava
+    tertiary = Color(0xFF90CAF9),         // još svijetlija plava
 
-    /* Other default colors to override
-    background = Color(0xFFFFFBFE),
-    surface = Color(0xFFFFFBFE),
+    background = Color(0xFFB3E5FC),       // glatka svijetloplava pozadina
+    surface = Color(0xFFE1F5FE),          // još svjetlija plava za površine
     onPrimary = Color.White,
     onSecondary = Color.White,
-    onTertiary = Color.White,
-    onBackground = Color(0xFF1C1B1F),
-    onSurface = Color(0xFF1C1B1F),
-    */
+    onTertiary = Color.Black,
+    onBackground = Color(0xFF0D47A1),     // tamnoplava za tekst na pozadini
+    onSurface = Color(0xFF0D47A1)
 )
+
 
 @Composable
 fun NewsFeedAppTheme(
