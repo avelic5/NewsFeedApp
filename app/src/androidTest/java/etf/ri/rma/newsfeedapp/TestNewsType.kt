@@ -21,7 +21,10 @@ class TestNewsType {
     fun checkFeatured(){
         val featured = NewsData.getAllNews().find { it.isFeatured }
         if(featured!=null){
-            composeTestRule.setContent { FeaturedNewsCard(featured) }
+            composeTestRule.setContent { FeaturedNewsCard(
+                featured,
+                onClick = TODO()
+            ) }
             val image = composeTestRule.onNodeWithContentDescription("image", ignoreCase = true, substring = true)
             val imageBounds = image.getBoundsInRoot()
             val title = composeTestRule.onNodeWithText(featured.title)
@@ -35,7 +38,10 @@ class TestNewsType {
     fun checkStandard(){
         val nonfeatured = NewsData.getAllNews().find { !it.isFeatured }
         if(nonfeatured!=null){
-            composeTestRule.setContent { StandardNewsCard(nonfeatured) }
+            composeTestRule.setContent { StandardNewsCard(
+                nonfeatured,
+                onClick = TODO()
+            ) }
             val image = composeTestRule.onNodeWithContentDescription("image", ignoreCase = true, substring = true)
             val imageBounds = image.getBoundsInRoot()
             val title = composeTestRule.onNodeWithText(nonfeatured.title)

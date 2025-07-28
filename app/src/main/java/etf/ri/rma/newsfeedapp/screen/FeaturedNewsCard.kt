@@ -1,6 +1,7 @@
 package etf.ri.rma.newsfeedapp.screen
 
 import androidx.compose.foundation.Image
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.material3.Card
 import androidx.compose.material3.Text
@@ -14,8 +15,8 @@ import etf.ri.rma.newsfeedapp.model.NewsItem
 import etf.ri.rma.newsfeedapp.R
 
 @Composable
-fun FeaturedNewsCard(newsItem: NewsItem) {
-    Card(modifier = Modifier.padding(10.dp)) {
+fun FeaturedNewsCard(newsItem: NewsItem, onClick: () -> Unit) {
+    Card(modifier = Modifier.padding(10.dp).clickable{ onClick() }) {
         Column(modifier = Modifier.padding(10.dp)) {
             // Banner slika
             Image(

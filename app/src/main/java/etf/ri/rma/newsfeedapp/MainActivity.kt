@@ -9,13 +9,15 @@ import etf.ri.rma.newsfeedapp.screen.NewsFeedScreen
 
 import etf.ri.rma.newsfeedapp.ui.theme.NewsFeedAppTheme
 
+import androidx.navigation.compose.rememberNavController
+import etf.ri.rma.newsfeedapp.navigation.AppNavigation
+
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContent {
-            NewsFeedAppTheme {
-                NewsFeedScreen()
-            }
+            val navController = rememberNavController()
+            AppNavigation(navController = navController)
         }
     }
 }
